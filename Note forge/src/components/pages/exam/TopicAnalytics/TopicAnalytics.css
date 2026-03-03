@@ -1,0 +1,115 @@
+.analytics { }
+.analytics__header { margin-bottom:24px; }
+.analytics__title  { font-family:'Lora',serif; font-size:26px; font-weight:600; margin-bottom:5px; color:#1a1d2e; }
+.analytics__subtitle { font-size:14px; color:#5c6275; }
+
+.analytics__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Weightage bars */
+.weight-row { margin-bottom: 10px; }
+
+.weight-row__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  margin-bottom: 4px;
+  color: #1a1d2e;
+}
+
+.weight-row__marks { color: #5c6275; }
+
+.weight-row__track {
+  height: 7px;
+  background: #f0f2f8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.weight-row__fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* Weak areas */
+.weak-row { margin-bottom: 14px; }
+
+.weak-row__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 13px;
+  color: #1a1d2e;
+}
+
+.weak-row__score { font-weight: 700; }
+.weak-row__target { font-size: 11px; color: #9399a6; }
+
+.weak-row__track {
+  height: 8px;
+  background: #f0f2f8;
+  border-radius: 4px;
+  position: relative;
+}
+
+.weak-row__fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s;
+}
+
+.weak-row__target-line {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #aaa;
+  border-radius: 1px;
+}
+
+.weak-row__target-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: #9399a6;
+}
+
+/* Heatmap */
+.heatmap-card { overflow-x: auto; }
+
+.heatmap__table { width: 100%; border-collapse: collapse; }
+
+.heatmap__year { font-size:11px; color:#5c6275; font-weight:500; padding-right:10px; }
+
+.heatmap__month { font-size:11px; font-weight:500; color:#9399a6; padding:4px 6px; text-align:center; }
+
+.heatmap__cell {
+  width: 28px; height: 28px;
+  border-radius: 5px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.heatmap__legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: #9399a6;
+}
+
+.heatmap__swatch { width:16px; height:16px; border-radius:3px; }
+
+@media(max-width:960px){ .analytics__grid { grid-template-columns:1fr; } }

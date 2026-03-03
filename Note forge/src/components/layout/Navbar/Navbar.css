@@ -1,0 +1,203 @@
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 58px;
+  background: #ffffff;
+  border-bottom: 1px solid #e3e6f0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px 0 0;
+  z-index: 100;
+  gap: 12px;
+}
+
+/* ── Logo ── */
+.navbar__logo {
+  width: 240px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.navbar__logomark {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #3b5bdb, #7048e8);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.navbar__logotype {
+  font-family: 'Lora', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.navbar__logotype span { color: #3b5bdb; }
+
+/* ── Search ── */
+.navbar__search {
+  flex: 1;
+  max-width: 380px;
+  position: relative;
+}
+
+.navbar__search-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #9399a6;
+  pointer-events: none;
+}
+
+.navbar__search-input {
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  background: #f0f2f8;
+  border: 1px solid #e3e6f0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1d2e;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.navbar__search-input:focus {
+  background: #ffffff;
+  border-color: #3b5bdb;
+}
+
+/* ── Right side ── */
+.navbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Auth buttons (logged out) */
+.navbar__btn-login {
+  padding: 7px 16px;
+  background: none;
+  border: 1.5px solid #e3e6f0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1d2e;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.navbar__btn-login:hover { border-color: #3b5bdb; background: #f6f7fb; }
+
+.navbar__btn-signup {
+  padding: 7px 16px;
+  background: linear-gradient(135deg, #3b5bdb, #4c6ef5);
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.navbar__btn-signup:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(59, 91, 219, 0.3);
+}
+
+/* Avatar + dropdown (logged in) */
+.navbar__user-menu {
+  position: relative;
+}
+
+.navbar__avatar {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #364fc7, #7048e8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.15s;
+}
+.navbar__avatar:hover { box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.2); }
+
+/* Dropdown */
+.navbar__dropdown {
+  position: absolute;
+  top: 100%;        /* ← remove the + 10px gap */
+  right: 0;
+  padding-top: 18px; /* ← move the visual gap here instead */
+  background: #ffffff;
+  border: 1px solid #e3e6f0;
+  border-radius: 12px;
+  padding: 12px 0 8px;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.18s, transform 0.18s;
+  z-index: 200;
+}
+
+.navbar__user-menu:hover .navbar__dropdown,
+.navbar__user-menu:focus-within .navbar__dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.navbar__dropdown-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1d2e;
+  padding: 0 16px 2px;
+}
+
+.navbar__dropdown-email {
+  font-size: 12px;
+  color: #9399a6;
+  padding: 0 16px 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar__dropdown-divider {
+  height: 1px;
+  background: #e3e6f0;
+  margin: 0 0 6px;
+}
+
+.navbar__dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: #5c6275;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.navbar__dropdown-item:hover { background: #f6f7fb; color: #e03131; }

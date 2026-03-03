@@ -1,0 +1,143 @@
+.upload-page { padding: 32px 36px; }
+
+.upload-page__header { margin-bottom: 24px; }
+
+.upload-page__title {
+  font-family: 'Lora', serif;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #1a1d2e;
+}
+
+.upload-page__subtitle { font-size: 14px; color: #5c6275; }
+
+/* ── Limit bar ── */
+.upload-limit {
+  background: #ffffff;
+  border: 1px solid #e3e6f0;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-limit__label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #1a1d2e;
+}
+
+/* ── Dropzone ── */
+.dropzone {
+  border: 2px dashed #c9d0e0;
+  border-radius: 16px;
+  background: #fafbff;
+  padding: 56px 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  margin-bottom: 16px;
+}
+
+.dropzone:hover,
+.dropzone--over {
+  border-color: #3b5bdb;
+  background: #eef2ff;
+  transform: scale(1.01);
+}
+
+.dropzone__icon  { font-size: 44px; margin-bottom: 14px; }
+.dropzone__title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1a1d2e; }
+.dropzone__sub   { font-size: 14px; color: #5c6275; margin-bottom: 18px; }
+
+/* ── Stepper ── */
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.stepper__step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stepper__connector {
+  position: absolute;
+  top: 14px;
+  left: 50%; right: -50%;
+  height: 2px;
+  transition: background 0.4s;
+  z-index: 0;
+}
+
+.stepper__circle {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1;
+  transition: background 0.3s, border-color 0.3s;
+  border: 2px solid;
+}
+
+.stepper__spin {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid #3b5bdb;
+  border-top-color: transparent;
+}
+
+.stepper__label {
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* ── Success card ── */
+.upload-success__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.upload-success__icon {
+  width: 48px; height: 48px;
+  background: #ebfbee;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.upload-success__title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+  color: #1a1d2e;
+}
+
+.upload-success__meta { font-size: 13px; color: #5c6275; }
+
+.upload-success__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.upload-success__actions { display: flex; gap: 10px; }
+
+@media (max-width: 600px) { .upload-page { padding: 20px 16px; } }

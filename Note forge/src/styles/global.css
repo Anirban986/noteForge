@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════
+   global.css — bare minimum only
+   Fonts · Reset · Keyframes · Utilities
+   Everything else lives in component CSS
+═══════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f6f7fb;
+  color: #1a1d2e;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5e0; border-radius: 4px; }
+
+/* ── Keyframes (referenced by multiple components) ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Stagger helpers (used across every page) ── */
+.fade-up   { animation: fadeUp 0.28s ease 0s    both; }
+.fade-up-1 { animation: fadeUp 0.28s ease 0.05s both; }
+.fade-up-2 { animation: fadeUp 0.28s ease 0.10s both; }
+.fade-up-3 { animation: fadeUp 0.28s ease 0.15s both; }
+.fade-up-4 { animation: fadeUp 0.28s ease 0.20s both; }
+
+/* ── Spin / pulse helpers ── */
+.spin  { animation: spin  0.8s linear  infinite; }
+.pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+/* ── Generic two-column grid (shared layout) ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 960px) { .two-col { grid-template-columns: 1fr; } }
