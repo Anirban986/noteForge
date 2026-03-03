@@ -34,7 +34,7 @@ export default function App() {
 
   const handleUpgrade = () => { setIsPremium(true); setShowModal(false); };
 
-  // Only show upgrade modal if already logged in, otherwise prompt signup first
+  // Only to show upgrade modal if already logged in, otherwise prompt signup first
   const handleUpgradeClick = () => {
     if (!user) { setShowModal(false); setAuthMode("signup"); return; }
     setShowModal(true);
