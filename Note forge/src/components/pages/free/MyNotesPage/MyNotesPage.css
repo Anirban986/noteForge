@@ -1,0 +1,149 @@
+.my-notes { padding: 32px 36px; }
+
+.my-notes__header { margin-bottom: 24px; }
+
+.my-notes__title {
+  font-family: 'Lora', serif;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #1a1d2e;
+}
+
+.my-notes__subtitle { font-size: 14px; color: #5c6275; }
+
+/* ── Filter chips ── */
+.my-notes__filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  border: 1px solid #e3e6f0;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #5c6275;
+  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+
+.filter-chip:hover,
+.filter-chip--active {
+  background: #eef2ff;
+  color: #3b5bdb;
+  border-color: #3b5bdb;
+}
+
+/* ── Notes grid ── */
+.my-notes__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 16px;
+}
+
+/* ── Individual note card ── */
+.note-card { position: relative; overflow: hidden; padding-top: 22px !important; }
+
+.note-card__bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.note-card__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.note-card__icon {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.note-card__menu {
+  font-size: 20px;
+  color: #9399a6;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.note-card__title {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.35;
+  color: #1a1d2e;
+}
+
+.note-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.note-card__footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9399a6;
+  padding-top: 10px;
+  border-top: 1px solid #e3e6f0;
+}
+
+/* ── Locked slot ── */
+.note-card--locked {
+  border: 2px dashed #e3e6f0 !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  cursor: pointer;
+  transition: border-color 0.2s !important;
+  padding-top: 18px !important;
+}
+
+.note-card--locked:hover { border-color: #3b5bdb !important; }
+
+.note-card--locked__plus  { font-size: 28px; opacity: 0.35; margin-bottom: 8px; }
+.note-card--locked__label { font-size: 13px; color: #9399a6; margin-bottom: 8px; }
+
+/* ── Premium unlocked add slot ── */
+.note-card--add {
+  border: 2px dashed #b2f2bb !important;
+  box-shadow: none !important;
+  background: #f4fdf6 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s !important;
+  padding-top: 18px !important;
+}
+
+.note-card--add:hover {
+  border-color: #2f9e44 !important;
+  background: #ebfbee !important;
+}
+
+.note-card--add__plus  { font-size: 28px; color: #2f9e44; margin-bottom: 8px; }
+.note-card--add__label { font-size: 13px; color: #2f9e44; margin-bottom: 8px; font-weight: 500; }
+
+@media (max-width: 600px) {
+  .my-notes { padding: 20px 16px; }
+}
