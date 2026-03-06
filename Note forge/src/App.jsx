@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import "./styles/global.css";
 import api from "./components/layout/api";
 
@@ -32,14 +32,53 @@ export default function App() {
   // Called by UploadNotesPage when user tries to upload without being logged in
   const handleUploadAuth = () => setAuthMode("signup");
 
-  const handleUpgrade = () => { setIsPremium(true); setShowModal(false); };
+
+  useEffect(()=>{
+    const checkAuth=async()=>{
+      try{
+        const res=await api.get("/api/auth/itsMe");
+        setUser(res.data.user);
+        setIsPremium(res.data.user.plan === "premium");
+      }catch(error){
+        setUser(null);
+      setIsPremium(false);
+      }
+    }
+    checkAuth();
+  },[]);
+
+  const handleUpgrade = async () => {
+    try {
+      const res = await api.post("/api/auth/upgrade");
+      setIsPremium(true);
+      setShowModal(false);
+      // Optional: update user object if backend returns updated user
+      setUser(prev => ({
+        ...prev,
+        plan: "premium",
+        planExpiresAt: res.data.expiresAt
+      }));
+    } catch (error) {
+      console.error("Upgrade failed:", error);
+
+      if (error.response?.status === 401) {
+        setAuthMode("login");
+      } else {
+        alert(err.response?.data?.message || "Upgrade failed");
+      }
+    }
+  };
 
   // Only to show upgrade modal if already logged in, otherwise prompt signup first
   const handleUpgradeClick = () => {
     if (!user) { setShowModal(false); setAuthMode("signup"); return; }
     setShowModal(true);
   };
-  const handleAuthSuccess = (userData) => { setUser(userData); setAuthMode(null); };
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+    setIsPremium(userData.plan === "premium");
+    setAuthMode(null);
+  };
   const handleLogOut = async () => {
     try {
       await api.post("/api/auth/logout");
