@@ -14,7 +14,7 @@ async function createUser(userData){
 }
 
 async function findUserById(id){
-    return await user.findById(id);
+    return await user.findById(id).select("-password");
 }
 
 module.exports={

@@ -1,20 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./ExamUpload.css";
 import Card from "../../../ui/Card/Card";
 import Button from "../../../ui/Button/Button";
 import ProgressBar from "../../../ui/ProgressBar/ProgressBar";
 import SectionTitle from "../../../ui/SectionTitle/SectionTitle";
-import { EXAMS } from "../../../../data/mockData";
-
+import { EXAM_DATA } from "../ExamData";
+import api from "../../../layout/api";
 const STEPS = ["Upload", "Extracting Text", "Understanding Content", "Generating Notes"];
 
-export default function ExamUpload() {
-  const [stage,   setStage]   = useState("idle");
-  const [progress,setProgress]= useState(0);
-  const [step,    setStep]    = useState(0);
-  const [dragOver,setDragOver]= useState(false);
+export default function ExamUpload({ exam }) {
+  const [stage, setStage] = useState("idle");
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
   const [subject, setSubject] = useState("");
-  const [chapter, setChapter] = useState("");
+  const [chapters, setChapters] = useState([]);
+  const [selectedChapter, setSelectedChapter] = useState("");
+  const [file, setFile] = useState(null);
+
+
+  const examData = EXAM_DATA?.[exam];
+  const subjects = examData?.subjects || {};
+
+
+  // 🔥 When exam changes
+  useEffect(() => {
+    if (examData) {
+      const firstSubject = Object.keys(subjects)[0];
+
+      if (firstSubject) {
+        setSubject(firstSubject);
+
+        const firstChapters = subjects[firstSubject].chapters || [];
+        setChapters(firstChapters);
+        setSelectedChapter(firstChapters[0] || "");
+      }
+    }
+  }, [examData]);
+
+
+  // 🔥 When subject changes
+  useEffect(() => {
+    if (subject && subjects[subject]) {
+      const newChapters = subjects[subject].chapters || [];
+      setChapters(newChapters);
+      setSelectedChapter(newChapters[0] || "");
+    }
+  }, [subject, subjects]);
+
 
   const simulate = () => {
     setStage("uploading"); setProgress(0); setStep(0);
@@ -25,6 +58,51 @@ export default function ExamUpload() {
       });
     }, 60);
   };
+
+  const handleChapterSelect = (chapter) => {
+    if (selectedChapter.includes(chapter)) {
+      setSelectedChapter(selectedChapter.filter(c => c !== chapter));
+    } else {
+      setSelectedChapter([...selectedChapter, chapter]);
+    }
+  };
+
+
+  const uploadFile = async (selectedFile) => {
+    if (!selectedFile) {
+      alert("Please select a file");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      formData.append("file", selectedFile);
+      formData.append("mode", "Exam");
+      formData.append("exam", exam);
+      formData.append("subject", subject);
+      formData.append("chapter", selectedChapter);
+
+      const response = await api.post(
+        "/api/notes/premium/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
+
+      console.log("Upload success:", response.data);
+
+      // to  run  animation
+      simulate();
+
+    } catch (error) {
+      console.error("Upload error:", error.response?.data || error.message);
+    }
+  };
+
 
   const runProcessing = () => {
     let s = 1;
@@ -48,15 +126,35 @@ export default function ExamUpload() {
           {stage === "idle" && (
             <div
               className={`exam-dropzone ${dragOver ? "exam-dropzone--over" : ""}`}
-              onClick={simulate}
+              
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
-              onDrop={e => { e.preventDefault(); setDragOver(false); simulate(); }}
+              onDrop={e => {
+                e.preventDefault();
+                setDragOver(false);
+                const droppedFile = e.dataTransfer.files[0];
+                setFile(droppedFile);
+
+                uploadFile(droppedFile);
+              }}
             >
               <div className="exam-dropzone__icon">📂</div>
               <div className="exam-dropzone__title">Drop your PDF here</div>
               <div className="exam-dropzone__sub">PDF, JPG, PNG · Up to 50MB</div>
-              <Button size="lg">Choose File</Button>
+              <input
+                type="file"
+                accept=".pdf,.png,.jpg"
+                hidden
+                id="fileUpload"
+                onChange={(e) => {
+                  const selectedFile = e.target.files[0];
+                  setFile(selectedFile);
+                  uploadFile(selectedFile);
+                }}
+              />
+              <Button size="lg" onClick={() => document.getElementById("fileUpload").click()}>
+                Choose File
+              </Button>
             </div>
           )}
 
@@ -79,9 +177,9 @@ export default function ExamUpload() {
                     )}
                     <div className="exam-stepper__circle"
                       style={{
-                        background:  i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
+                        background: i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
                         borderColor: i <= step ? "#3b5bdb" : "#e3e6f0",
-                        color:       i < step ? "#fff" : "#3b5bdb",
+                        color: i < step ? "#fff" : "#3b5bdb",
                       }}>
                       {i < step ? "✓" : i === step
                         ? <div className="exam-stepper__spin spin" />
@@ -95,7 +193,7 @@ export default function ExamUpload() {
                 ))}
               </div>
 
-              {stage === "uploading"  && <ProgressBar value={progress} />}
+              {stage === "uploading" && <ProgressBar value={progress} />}
               {stage === "processing" && (
                 <div className="pulse" style={{ fontSize: 13, color: "#5c6275" }}>{STEPS[step]}…</div>
               )}
@@ -121,17 +219,33 @@ export default function ExamUpload() {
           <SectionTitle>Note Details</SectionTitle>
 
           <label className="exam-upload__form-label">Subject</label>
-          <input className="exam-upload__form-input" value={subject}
-            onChange={e => setSubject(e.target.value)} placeholder="e.g. Data Structures" />
+          <select
+            className="subject__select"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+          >
+            {exam &&
+              Object.keys(subjects).map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))
+            }
+          </select>
+
 
           <label className="exam-upload__form-label">Chapter / Topic</label>
-          <input className="exam-upload__form-input" value={chapter}
-            onChange={e => setChapter(e.target.value)} placeholder="e.g. Trees & Graphs" />
-
-          <label className="exam-upload__form-label">Exam Target</label>
-          <select className="exam-upload__form-select">
-            {EXAMS.map(e => <option key={e}>{e}</option>)}
+          <select
+            value={selectedChapter}
+            className="chapter__select"
+            onChange={(e) => setSelectedChapter(e.target.value)}
+          >
+            {chapters.map((chapter) => (
+              <option key={chapter} value={chapter}>
+                {chapter}
+              </option>
+            ))}
           </select>
+
+
 
           <div className="exam-upload__tip">
             💡 AI will auto-detect syllabus coverage and flag missing topics after processing.

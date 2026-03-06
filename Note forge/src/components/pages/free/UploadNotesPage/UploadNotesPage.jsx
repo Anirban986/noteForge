@@ -4,41 +4,58 @@ import Card from "../../../ui/Card/Card";
 import Badge from "../../../ui/Badge/Badge";
 import Button from "../../../ui/Button/Button";
 import ProgressBar from "../../../ui/ProgressBar/ProgressBar";
-
+import api from "../../../layout/api";
 const STEPS = ["Upload", "Extracting Text", "Understanding", "Generating Notes"];
 
 export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequired }) {
-  const [stage,    setStage]    = useState("idle");
+  const [stage, setStage] = useState("idle");
   const [progress, setProgress] = useState(0);
-  const [step,     setStep]     = useState(0);
+  const [step, setStep] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+ 
 
   // Gate: if not logged in, show auth modal instead of uploading
   const requireAuth = (action) => {
     if (!user) { onAuthRequired(); return; }
-    action();
+    action(); 
   };
 
-  const runUpload = () => {
+  const handleUpload = async (file) => {
+  try {
     setStage("uploading");
     setProgress(0);
-    setStep(0);
-    if (isPremium) setUploadCount(c => c + 1);
 
-    const upInt = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) {
-          clearInterval(upInt);
-          setStage("processing");
-          setStep(1);
-          runProcessing();
-          return 100;
-        }
-        return p + 5;
-      });
-    }, 60);
-  };
+    const formData = new FormData();
+    formData.append("file", file);
+
+    await api.post("/api/notes/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (progressEvent) => {
+        const percent = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
+        setProgress(percent);
+      },
+    });
+
+    // ✅ Upload finished
+    setStage("processing");
+    setStep(1);
+
+    // 🔥 Use your existing animation
+    runProcessing();
+
+  } catch (err) {
+    if (err.response?.status === 401) {
+      onAuthRequired();
+    } else {
+      console.error(err);
+      setStage("idle");
+    }
+  }
+};
 
   const runProcessing = () => {
     let s = 1;
@@ -95,8 +112,29 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
             >
               <div className="dropzone__icon">📂</div>
               <div className="dropzone__title">Drop your PDF here</div>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.png"
+                style={{ display: "none" }}
+                id="fileInput"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setSelectedFile(file);
+                    requireAuth(() => handleUpload(file));
+                  }
+                }}
+              />
               <div className="dropzone__sub">PDF, JPG, PNG · Up to 50MB · Unlimited uploads</div>
-              <Button size="lg">Choose File</Button>
+              <Button
+                size="lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  document.getElementById("fileInput").click();
+                }}
+              >
+                Choose File
+              </Button>
             </div>
           ) : (
             /* ── Free: locked dropzone ── */
@@ -138,9 +176,9 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
                 <div
                   className="stepper__circle"
                   style={{
-                    background:  i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
+                    background: i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
                     borderColor: i < step ? "#3b5bdb" : i === step ? "#3b5bdb" : "#e3e6f0",
-                    color:       i < step ? "#fff"    : "#3b5bdb",
+                    color: i < step ? "#fff" : "#3b5bdb",
                   }}
                 >
                   {i < step ? "✓" : i === step
@@ -150,7 +188,7 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
                 <div
                   className="stepper__label"
                   style={{
-                    color:      i <= step ? "#1a1d2e" : "#9399a6",
+                    color: i <= step ? "#1a1d2e" : "#9399a6",
                     fontWeight: i === step ? 600 : 400,
                   }}
                 >
@@ -160,8 +198,8 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
             ))}
           </div>
 
-          {stage === "uploading"   && <ProgressBar value={progress} />}
-          {stage === "processing"  && (
+          {stage === "uploading" && <ProgressBar value={progress} />}
+          {stage === "processing" && (
             <div style={{ fontSize: 13, color: "#5c6275" }} className="pulse">
               {STEPS[step]}…
             </div>

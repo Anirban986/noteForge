@@ -13,10 +13,10 @@ OriginalFileName:{
     type:String,
     required:true
 },
-fileUrl:{
+/*fileUrl:{
     type:String,
     required:true
-},
+},*/
 fileSize:{
     type:Number,
     required:true

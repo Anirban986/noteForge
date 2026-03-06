@@ -139,6 +139,28 @@
   margin-bottom: 5px;
 }
 
+.subject__select{
+  padding: 6px 12px;
+  border: 1px solid #e3e6f0;
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1d2e;
+  background: #ffffff;
+  outline: none;
+}
+
+.chapter__select{
+   padding: 6px 12px;
+  border: 1px solid #e3e6f0;
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1d2e;
+  background: #ffffff;
+  outline: none;
+}
+
 .exam-upload__form-input,
 .exam-upload__form-select {
   width: 100%;

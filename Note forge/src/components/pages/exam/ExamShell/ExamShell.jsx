@@ -1,8 +1,8 @@
 import { useState } from "react";
 import "./ExamShell.css";
 import ProgressBar from "../../../ui/ProgressBar/ProgressBar";
-import { EXAMS } from "../../../../data/mockData";
 
+import {EXAM_DATA} from "../ExamData";
 import ExamDashboard from "../ExamDashboard/ExamDashboard";
 import ExamUpload from "../ExamUpload/ExamUpload";
 import RevisionNotes from "../RevisionNotes/RevisionNotes";
@@ -10,6 +10,7 @@ import MissingTopics from "../MissingTopics/MissingTopics";
 import TopicAnalytics from "../TopicAnalytics/TopicAnalytics";
 import MockTest from "../MockTest/MockTest";
 import PreviousTests from "../PreviousTests/PreviousTests";
+
 
 
 const NAV = [
@@ -40,7 +41,11 @@ function ExamTopbar({ onExit, user, exam, setExam }) {
           value={exam}
           onChange={e => setExam(e.target.value)}
         >
-          {EXAMS.map(e => <option key={e}>{e}</option>)}
+          {Object.keys(EXAM_DATA).map((examName) => (
+            <option key={examName} value={examName}>
+              {examName}
+            </option>
+          ))}
         </select>
 
         <div className="exam-topbar__notif">
@@ -85,19 +90,21 @@ function ExamSidebar({ page, setPage }) {
   );
 }
 
-export default function ExamShell({ onExit ,user}) {
+export default function ExamShell({ onExit, user }) {
   const [page, setPage] = useState("dashboard");
-  const [exam, setExam] = useState(EXAMS[0]);
+  const examList = Object.keys(EXAM_DATA);
+  const [exam, setExam] = useState(examList[0] || "");
+
 
   const renderPage = () => {
     switch (page) {
       case "dashboard": return <ExamDashboard setPage={setPage} />;
-      case "upload": return <ExamUpload />;
       case "revision": return <RevisionNotes />;
       case "missing": return <MissingTopics />;
       case "analytics": return <TopicAnalytics />;
       case "mock": return <MockTest />;
       case "previous": return <PreviousTests />;
+      case "upload": return <ExamUpload exam={exam} />;
       default: return <ExamDashboard setPage={setPage} />;
     }
   };

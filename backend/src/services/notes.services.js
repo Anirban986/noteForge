@@ -1,19 +1,20 @@
 const notesRepository = require("../repositories/notes.repository");
 const userRepository = require("../repositories/user.repository");
 const user = require("../models/user.model");
+const metadataRepo = require("../repositories/metadata.repository")
 
-async function uploadFileService(userId, file, mode) {
+async function uploadFileService(userId, file, mode, metadata) {
     if (!file) {
-        throw new error("File is required");
+        throw new Error("File is required");
     }
     const User = await userRepository.findUserById(userId);
 
     if (!User) {
-        throw new error("Not User");
+        throw new Error("User not found");
     }
 
-    // Enforce free plan limit
-    if (user.plan === "free") {
+
+    if (User.plan === "free") {
         const count = await notesRepository.countByuserIdrepository(userId);
 
         if (count >= 5) {
@@ -21,32 +22,56 @@ async function uploadFileService(userId, file, mode) {
         }
     }
 
-    // Enforce premium for exam mode
-    if (mode === "exam" && user.plan !== "premium") {
+
+    if (mode === "Exam" && User.plan !== "premium") {
         throw new Error("Exam mode is premium feature");
     }
 
-    const note=await notesRepository.createFilesRepository({
+    const note = await notesRepository.createFilesRepository({
         userId,
         OriginalFileName: file.originalname,
-        fileUrl: file.path,
+        //fileUrl: file.path,
         fileSize: file.size,
         mimeType: file.mimetype,
-        mode: mode || "normal"
+        mode: mode || "Normal"
     });
 
-    return note;
-} 
+    if (mode === "Exam") {
+        await metadataRepo.createExamRepository({
+            userId: userId,
+            noteId: note._id,
+            exam: metadata.exam,
+            subject: metadata.subject,
+            chapter: metadata.chapter
+        })
+    }
 
-async function getUserNotesService(userId){
-    return await notesRepository.findByuserIdrepository(userId);
+    return note;
 }
 
-async function deleteNoteService(noteId){
+async function getUserNotesService(userId,filters) {
+    if(!filters || Object.keys(filters).length===0){
+        return await notesRepository.findByuserIdrepository(userId);
+    }
+
+     // Step 1: find metadata
+     const metadata= await metadataRepo.findByExamRepository(
+        userId,
+        filters.exam,
+        filters.subject,
+        filters.chapter
+     );
+
+     const noteIds= metadata.map(m => m.noteId);
+     // Step 3: fetch notes
+     return await notesRepository.findNotesByIds(noteIds);
+}
+
+async function deleteNoteService(noteId) {
     return await notesRepository.deleteByidrepositorty(noteId);
 }
 
-module.exports={
+module.exports = {
     uploadFileService,
     getUserNotesService,
     deleteNoteService
