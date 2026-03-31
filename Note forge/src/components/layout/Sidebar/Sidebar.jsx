@@ -44,7 +44,7 @@ export default function Sidebar({ page, onNav, onUpgrade, isPremium }) {
           <div className="sidebar__upgrade__desc">
             Unlimited uploads, Exam Mode &amp; smart AI tools.
           </div>
-          <button className="sidebar__upgrade__btn">Upgrade — $9/mo</button>
+          <button className="sidebar__upgrade__btn">Upgrade — Rs.99/mo</button>
         </div>
       )}
     </aside>

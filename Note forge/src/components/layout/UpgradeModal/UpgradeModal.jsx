@@ -35,7 +35,7 @@ export default function UpgradeModal({ onClose, onUpgrade }) {
         </div>
 
         <div className="modal__pricing">
-          <span className="modal__pricing__price">$9</span>
+          <span className="modal__pricing__price">Rs.99</span>
           <span className="modal__pricing__period"> /month · cancel anytime</span>
         </div>
 
