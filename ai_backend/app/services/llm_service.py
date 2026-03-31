@@ -1,4 +1,7 @@
-from langchain_community.llms import ollama
+from langchain_ollama import OllamaLLM
 
 def get_llm():
-    return ollama(model='llama3')
+    return OllamaLLM(
+        model="llama3",   # LLM for generation
+        temperature=0.3
+    )
