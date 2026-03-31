@@ -44,11 +44,35 @@ async function findNotesByIds(noteIds){
 
 }
 
+async function updateNoteWithAI(noteId, aiData) {
+    return await Notes.findByIdAndUpdate(
+        noteId,
+        {
+            summary: aiData.summary,
+            aiStatus: aiData.aiStatus || "completed",
+            updatedAt: Date.now()
+        },
+        { new: true }
+    );
+}
+
+async function markeAsFailed(noteId){
+    return await Notes.findByIdAndUpdate(
+        noteId,{
+        aiStatus:"failed",
+        updatedAt: Date.now()
+        },
+         { new: true }
+    );
+}
+
 module.exports = {
     createFilesRepository,
     countByuserIdrepository,
     findByIdrepository,
     findByuserIdrepository,
     deleteByidrepositorty,
-    findNotesByIds
+    findNotesByIds,
+    updateNoteWithAI,
+    markeAsFailed
 };
