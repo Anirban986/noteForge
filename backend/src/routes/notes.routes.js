@@ -25,6 +25,9 @@ router.get("/premium/myNotes",
     notesController.getNotesController
 );
 
-
+router.get("/countDocs",
+    userMiddleware.userMiddleware,
+    notesController.countDocumentController
+)
 
 module.exports=router;

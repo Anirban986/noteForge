@@ -4,14 +4,55 @@ import Badge from "../../../ui/Badge/Badge";
 import Button from "../../../ui/Button/Button";
 import SectionTitle from "../../../ui/SectionTitle/SectionTitle";
 import { NOTES_DATA } from "../../../../data/mockData";
+import { useEffect, useState } from "react";
+import api from "../../../layout/api";
+
 
 export default function DashboardPage({ isPremium, onUpgrade, user }) {
   const recentNotes = [...NOTES_DATA]
     .sort((a, b) => b.addedTs - a.addedTs)
     .slice(0, 4);
 
+  
+  
+  const [details,setDetails]=useState([]);
+  const [count,setCount]=useState(null);
+
+  useEffect(()=>{
+    const fetchDetails=async ()=>{
+      try{
+        const res=await api.get("/api/auth/profile");
+        setDetails(res.data.user);
+        console.log(res);
+        console.log(res.data);
+      }
+      catch(err){
+        console.log(err);
+      }
+    }
+
+    fetchDetails();
+
+  },[])
+
+
+  useEffect(()=>{
+    const countDocs=async ()=>{
+      try{
+        const res=await api.get("/api/notes/countDocs");
+        setCount(res.data.count);
+        console.log(res.data);
+        console.log(res.data.count);
+      }catch(err){
+        console.log(err)
+      }
+    }
+    countDocs();
+  },[])
+
+
   const stats = [
-    { icon: "📄", label: "Notes Uploaded",  value: isPremium ? "8" : "5",  sub: isPremium ? "Unlimited plan" : "5 / 5 free limit",  bg: "#eef2ff" },
+    { icon: "📄", label: "Notes Uploaded",  value: isPremium ? (count?count.normal:0) : "5",  sub: isPremium ? "Unlimited plan" : "5 / 5 free limit",  bg: "#eef2ff" },
     { icon: "🧠", label: "Topics Detected", value: "23", sub: "Across all notes",    bg: "#ebfbee" },
     { icon: "⬇", label: "Downloads",       value: "12", sub: "Structured exports",  bg: "#fff9db" },
   ];
@@ -19,7 +60,7 @@ export default function DashboardPage({ isPremium, onUpgrade, user }) {
   return (
     <div className="dashboard fade-up">
       <div className="dashboard__header">
-        <h1 className="dashboard__title">Good morning, Alex 👋</h1>
+        <h1 className="dashboard__title">Welcome, {details?.username || "user"}  👋</h1>
         <p className="dashboard__subtitle">Your notes workspace is ready.</p>
       </div>
 

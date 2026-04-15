@@ -4,6 +4,14 @@ async function createExamRepository(data){
     return await metadata.create(data)
 }
 
+const Metadata = require("../models/metadata.model");
+
+async function findNotesByIdRepository(noteIds) {
+    return await Metadata.find({
+        noteId: { $in: noteIds }
+    });
+}
+
 async function findByExamRepository(userId,exam,subject,chapter){
 
     const query = { userId };
@@ -17,5 +25,6 @@ async function findByExamRepository(userId,exam,subject,chapter){
 
 module.exports={
     createExamRepository,
-    findByExamRepository
+    findByExamRepository,
+    findNotesByIdRepository
 }

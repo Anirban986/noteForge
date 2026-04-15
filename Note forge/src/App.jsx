@@ -12,6 +12,7 @@ import MyNotesPage from "./components/pages/free/MyNotesPage/MyNotesPage";
 import UploadNotesPage from "./components/pages/free/UploadNotesPage/UploadNotesPage";
 import ExamShell from "./components/pages/exam/ExamShell/ExamShell";
 
+
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [isPremium, setIsPremium] = useState(false);
@@ -20,8 +21,15 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState(null); // null | "signup" | "login"
 
+
+
   const handleNavClick = key => {
-    if (key === "exam-mode") {
+    if (key === "admin") {
+    
+    setPage("dashboard");
+    return;
+  }
+    else if (key === "exam-mode") {
       if (!isPremium) { handleUpgradeClick(); return; }
       setInExamMode(true);
       return;
@@ -108,6 +116,8 @@ export default function App() {
       default: return <DashboardPage isPremium={isPremium} onUpgrade={handleUpgradeClick} />;
     }
   };
+
+ 
 
   return (
     <div style={{ minHeight: "100vh" }}>
