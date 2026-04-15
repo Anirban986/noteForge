@@ -14,7 +14,7 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
   const [dragOver, setDragOver] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
- 
+  const [file,setFile]=useState(null);
 
   // Gate: if not logged in, show auth modal instead of uploading
   const requireAuth = (action) => {
@@ -30,8 +30,10 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
     const formData = new FormData();
     formData.append("file", file);
 
-    await api.post("/api/notes/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const response=await api.post("/api/notes/premium/upload", 
+      formData, {
+      headers: { "Content-Type": "multipart/form-data" 
+      },
       onUploadProgress: (progressEvent) => {
         const percent = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total
@@ -40,12 +42,16 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
       },
     });
 
+   
+
     // ✅ Upload finished
     setStage("processing");
     setStep(1);
 
-    // 🔥 Use your existing animation
+    //  Use your existing animation
     runProcessing();
+    
+    console.log("upload response:", response.data);
 
   } catch (err) {
     if (err.response?.status === 401) {

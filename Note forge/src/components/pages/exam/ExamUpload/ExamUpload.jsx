@@ -23,7 +23,7 @@ export default function ExamUpload({ exam }) {
   const subjects = examData?.subjects || {};
 
 
-  // 🔥 When exam changes
+  //  When exam changes
   useEffect(() => {
     if (examData) {
       const firstSubject = Object.keys(subjects)[0];
@@ -39,7 +39,7 @@ export default function ExamUpload({ exam }) {
   }, [examData]);
 
 
-  // 🔥 When subject changes
+  //  When subject changes
   useEffect(() => {
     if (subject && subjects[subject]) {
       const newChapters = subjects[subject].chapters || [];

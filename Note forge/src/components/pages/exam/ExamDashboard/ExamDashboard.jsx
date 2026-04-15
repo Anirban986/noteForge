@@ -5,7 +5,8 @@ import Button from "../../../ui/Button/Button";
 import ProgressBar from "../../../ui/ProgressBar/ProgressBar";
 import SectionTitle from "../../../ui/SectionTitle/SectionTitle";
 import { NOTES_DATA, MISSING_TOPICS } from "../../../../data/mockData";
-
+import { useState,useEffect } from "react";
+import api from "../../../layout/api";
 const SCORE = 64;
 
 const IMPORTANT_TOPICS = [
@@ -17,12 +18,7 @@ const IMPORTANT_TOPICS = [
   { name: "Compiler – Parsing", weight: "8 marks",  priority: "#3b5bdb", coverage: 30 },
 ];
 
-const WEEK_STATS = [
-  { icon: "📄", label: "Notes Processed", val: 8  },
-  { icon: "✅", label: "Topics Covered",  val: 23 },
-  { icon: "📝", label: "Mock Tests",      val: 2  },
-  { icon: "⏱", label: "Study Hours",     val: 14 },
-];
+
 
 export default function ExamDashboard({ setPage }) {
   const statusColor =
@@ -31,6 +27,31 @@ export default function ExamDashboard({ setPage }) {
     SCORE < 40 ? "Poor" : SCORE < 60 ? "Average" : SCORE < 80 ? "Good" : "Ready";
 
   const recentNotes = [...NOTES_DATA].sort((a, b) => b.addedTs - a.addedTs).slice(0, 4);
+
+
+  const [count,setCount]=useState(null);
+
+  useEffect(()=>{
+    const countDocs=async ()=>{
+      try{
+        const res=await api.get("/api/notes/countDocs");
+        setCount(res.data.count);
+        console.log(res.data);
+        console.log(res.data.count);
+      }catch(err){
+        console.log(err)
+      }
+    }
+    countDocs();
+  },[])
+
+const WEEK_STATS = [
+  { icon: "📄", label: "Notes Processed", val: (count?count.exam:0)  },
+  { icon: "✅", label: "Topics Covered",  val: 23 },
+  { icon: "📝", label: "Mock Tests",      val: 2  },
+  { icon: "⏱", label: "Study Hours",     val: 14 },
+];
+
 
   return (
     <div className="exam-dashboard fade-up">

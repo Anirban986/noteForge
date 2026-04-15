@@ -1,0 +1,29 @@
+# Gemini — new unified SDK (replaces google-generativeai)
+google-genai>=0.8.0
+
+# LangChain stack
+langchain>=0.3.0
+langchain-text-splitters>=0.3.0
+langchain-google-genai>=2.0.0
+langchain-community>=0.3.0
+langchain-chroma>=0.1.0
+langchain-huggingface>=0.1.0
+
+# PDF processing
+pdf2image>=1.17.0
+pillow>=10.0.0
+
+# Vector store
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+
+# API server
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9
+
+# Config
+python-dotenv>=1.0.0
+
+# google-cloud-vision
+google-cloud-vision>=3.0.0
