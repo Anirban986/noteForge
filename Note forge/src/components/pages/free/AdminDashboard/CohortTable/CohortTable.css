@@ -1,0 +1,96 @@
+.adm-cohort {
+  background: #0d1321;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.adm-cohort__head {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.adm-cohort__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8edf5;
+}
+
+.adm-cohort__sub {
+  font-size: 11.5px;
+  color: #7a8899;
+  margin-top: 2px;
+}
+
+.adm-cohort__body {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.adm-cohort__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.adm-cohort__table th {
+  font-size: 9.5px;
+  font-family: 'DM Mono', monospace;
+  color: #3d4d60;
+  font-weight: 500;
+  padding: 0 4px 8px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.adm-cohort__table th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+
+.adm-cohort__table td {
+  padding: 3px 4px;
+  text-align: center;
+}
+
+.adm-cohort__table td:first-child {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: #7a8899;
+  text-align: left;
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.adm-cohort__cell {
+  width: 32px; height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  margin: auto;
+  cursor: default;
+  transition: transform 0.15s;
+}
+.adm-cohort__cell:hover { transform: scale(1.15); }
+
+.adm-cohort__legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.adm-cohort__legend-label {
+  font-size: 10px;
+  color: #3d4d60;
+  font-family: 'DM Mono', monospace;
+}
+
+.adm-cohort__legend-swatch {
+  width: 16px; height: 10px;
+  border-radius: 2px;
+}

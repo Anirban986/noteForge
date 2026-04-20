@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./styles/global.css";
 import api from "./components/layout/api";
 
@@ -11,82 +11,85 @@ import DashboardPage from "./components/pages/free/DashboardPage/DashboardPage";
 import MyNotesPage from "./components/pages/free/MyNotesPage/MyNotesPage";
 import UploadNotesPage from "./components/pages/free/UploadNotesPage/UploadNotesPage";
 import ExamShell from "./components/pages/exam/ExamShell/ExamShell";
-
+import AdminDashboard from "./components/pages/free/AdminDashboard/Admin/AdminDashboard";
 
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [isPremium, setIsPremium] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [inExamMode, setInExamMode] = useState(false);
+  const [inAdminMode, setInAdminMode] = useState(false); // ✅ NEW
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(null); // null | "signup" | "login"
-
-
+  const [authMode, setAuthMode] = useState(null);
 
   const handleNavClick = key => {
+
     if (key === "admin") {
-    
-    setPage("dashboard");
-    return;
-  }
-    else if (key === "exam-mode") {
+      if (user?.role !== "admin") {
+        alert("Access denied");
+        return;
+      }
+      setInAdminMode(true);
+      return;
+    }
+
+    setInAdminMode(false);
+
+    if (key === "exam-mode") {
       if (!isPremium) { handleUpgradeClick(); return; }
       setInExamMode(true);
       return;
     }
+
     setPage(key);
   };
 
-  // Called by UploadNotesPage when user tries to upload without being logged in
   const handleUploadAuth = () => setAuthMode("signup");
 
-
-  useEffect(()=>{
-    const checkAuth=async()=>{
-      try{
-        const res=await api.get("/api/auth/itsMe");
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await api.get("/api/auth/itsMe");
         setUser(res.data.user);
         setIsPremium(res.data.user.plan === "premium");
-      }catch(error){
+      } catch (error) {
         setUser(null);
-      setIsPremium(false);
+        setIsPremium(false);
       }
     }
     checkAuth();
-  },[]);
+  }, []);
 
   const handleUpgrade = async () => {
     try {
       const res = await api.post("/api/auth/upgrade");
       setIsPremium(true);
       setShowModal(false);
-      // Optional: update user object if backend returns updated user
       setUser(prev => ({
         ...prev,
         plan: "premium",
         planExpiresAt: res.data.expiresAt
       }));
     } catch (error) {
-      console.error("Upgrade failed:", error);
-
       if (error.response?.status === 401) {
         setAuthMode("login");
       } else {
-        alert(err.response?.data?.message || "Upgrade failed");
+        alert("Upgrade failed");
       }
     }
   };
 
-  // Only to show upgrade modal if already logged in, otherwise prompt signup first
   const handleUpgradeClick = () => {
     if (!user) { setShowModal(false); setAuthMode("signup"); return; }
     setShowModal(true);
   };
+
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     setIsPremium(userData.plan === "premium");
     setAuthMode(null);
   };
+
   const handleLogOut = async () => {
     try {
       await api.post("/api/auth/logout");
@@ -97,14 +100,35 @@ export default function App() {
       setUser(null);
       setIsPremium(false);
       setInExamMode(false);
+      setInAdminMode(false); // ✅ reset
       setPage("dashboard");
     }
   };
 
+  //  EXAM MODE (already correct)
   if (inExamMode) {
     return (
       <div style={{ position: "fixed", inset: 0, background: "#f6f7fb", zIndex: 200, overflowY: "auto" }}>
         <ExamShell onExit={() => setInExamMode(false)} user={user} />
+      </div>
+    );
+  }
+
+  //  ADMIN MODE (FIXED)
+  if (inAdminMode) {
+    if (user?.role !== "admin") {
+      return <div>Unauthorized</div>;
+    }
+    return (
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        background: "#0f172a",
+        zIndex: 99999,
+        overflowY: "auto",
+        isolation: "isolate"
+      }}>
+        <AdminDashboard onExit={() => setInAdminMode(false)} />
       </div>
     );
   }
@@ -116,8 +140,6 @@ export default function App() {
       default: return <DashboardPage isPremium={isPremium} onUpgrade={handleUpgradeClick} />;
     }
   };
-
- 
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -135,6 +157,7 @@ export default function App() {
           onNav={handleNavClick}
           onUpgrade={handleUpgradeClick}
           isPremium={isPremium}
+          isAdmin={user?.role === "admin"}
         />
         <main style={{ marginLeft: 240, flex: 1, minHeight: "calc(100vh - 58px)" }}>
           {renderPage()}

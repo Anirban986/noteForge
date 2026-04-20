@@ -1,0 +1,52 @@
+.adm-tickers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.adm-ticker {
+  background: #0d1321;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s;
+}
+
+.adm-ticker:hover {
+  border-color: rgba(255,255,255,0.14);
+}
+
+.adm-ticker__label {
+  font-size: 10.5px;
+  color: #3d4d60;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.adm-ticker__val {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px;
+  font-weight: 500;
+  color: #e8edf5;
+  letter-spacing: -0.5px;
+}
+
+.adm-ticker__change {
+  font-size: 11.5px;
+  font-family: 'DM Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.adm-ticker__change--up   { color: #00e5a0; }
+.adm-ticker__change--down { color: #ff4d6a; }
+
+@media (max-width: 1280px) {
+  .adm-tickers { grid-template-columns: repeat(2, 1fr); }
+}

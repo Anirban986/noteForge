@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { key: "upload-notes", icon: "⬆",  label: "Upload"    },
 ];
 
-export default function Sidebar({ page, onNav, onUpgrade, isPremium }) {
+export default function Sidebar({ page, onNav, onUpgrade, isPremium, isAdmin }) {
   return (
     <aside className="sidebar">
       <div className="sidebar__label">Workspace</div>
@@ -25,6 +25,23 @@ export default function Sidebar({ page, onNav, onUpgrade, isPremium }) {
         </div>
       ))}
 
+      {/* ✅ ADMIN SECTION */}
+      {isAdmin && (
+        <>
+          <div className="sidebar__label" style={{ marginTop: 8 }}>
+            Admin
+          </div>
+
+          <div
+            className={`sidebar__item ${page === "admin" ? "sidebar__item--active" : ""}`}
+            onClick={() => onNav("admin")}
+          >
+            <span className="sidebar__item__icon">🛠</span>
+            Admin Dashboard
+          </div>
+        </>
+      )}
+
       <div className="sidebar__label" style={{ marginTop: 8 }}>
         {isPremium ? "Premium" : "Upgrade"}
       </div>
@@ -42,7 +59,7 @@ export default function Sidebar({ page, onNav, onUpgrade, isPremium }) {
         <div className="sidebar__upgrade" onClick={onUpgrade}>
           <div className="sidebar__upgrade__title">✨ Go Premium</div>
           <div className="sidebar__upgrade__desc">
-            Unlimited uploads, Exam Mode &amp; smart AI tools.
+            Unlimited uploads, Exam Mode & smart AI tools.
           </div>
           <button className="sidebar__upgrade__btn">Upgrade — Rs.99/mo</button>
         </div>
