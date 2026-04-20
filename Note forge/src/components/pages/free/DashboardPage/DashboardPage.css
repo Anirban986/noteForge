@@ -23,7 +23,7 @@
   margin-bottom: 24px;
 }
 
-.stat-card { position: relative; overflow: hidden; }
+.stat-card-dashboard { position: relative; overflow: hidden; }
 
 .stat-card__orb {
   position: absolute;

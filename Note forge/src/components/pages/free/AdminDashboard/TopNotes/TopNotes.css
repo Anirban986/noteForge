@@ -1,0 +1,95 @@
+.adm-tn {
+  background: #0d1321;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.adm-tn__head {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.adm-tn__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8edf5;
+}
+
+.adm-tn__sub {
+  font-size: 11.5px;
+  color: #7a8899;
+  margin-top: 2px;
+}
+
+.adm-tn__body { padding: 8px 20px; }
+
+.adm-tn__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: opacity 0.15s;
+  cursor: default;
+}
+.adm-tn__row:hover { opacity: 0.8; }
+.adm-tn__row:last-child { border-bottom: none; }
+
+.adm-tn__rank {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #3d4d60;
+  width: 18px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.adm-tn__icon {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.adm-tn__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.adm-tn__name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #e8edf5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adm-tn__sub-label {
+  font-size: 10.5px;
+  color: #7a8899;
+  margin-top: 1px;
+}
+
+.adm-tn__stats {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.adm-tn__views {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #e8edf5;
+}
+
+.adm-tn__uploads {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: #7a8899;
+  margin-top: 1px;
+}

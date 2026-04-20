@@ -14,7 +14,15 @@ async function createUser(userData){
 }
 
 async function findUserById(id){
-    return await user.findById(id).select("-password");
+    console.log("🔍 Repository: Finding user by ID:", id);
+    try {
+        const User = await user.findById(id);
+        console.log("✅ Repository: User found:", !!User);
+        return User;
+    } catch (error) {
+        console.error("❌ Repository error:", error);
+        throw error;
+    }
 }
 
 module.exports={

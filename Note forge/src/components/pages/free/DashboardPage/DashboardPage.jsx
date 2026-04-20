@@ -67,7 +67,7 @@ export default function DashboardPage({ isPremium, onUpgrade, user }) {
       {/* Stats */}
       <div className="dashboard__stats">
         {stats.map((s, i) => (
-          <Card key={s.label} hover className={`stat-card fade-up-${i}`}>
+          <Card key={s.label} hover className={`stat-card-dashboard fade-up-${i}`}>
             <div className="stat-card__orb" style={{ background: s.bg }} />
             <div className="stat-card__icon" style={{ background: s.bg }}>{s.icon}</div>
             <div className="stat-card__value">{s.value}</div>

@@ -1,0 +1,115 @@
+.adm-topbar {
+  height: 56px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: #0d1321;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.adm-topbar__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #e8edf5;
+  letter-spacing: -0.3px;
+}
+
+.adm-topbar__subtitle {
+  font-size: 12.5px;
+  color: #7a8899;
+  margin-top: 1px;
+}
+
+.adm-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* Live badge */
+.adm-topbar__live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: #00e5a0;
+  background: rgba(0,229,160,0.1);
+  border: 1px solid rgba(0,229,160,0.15);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+
+
+
+.adm-topbar__live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #00e5a0;
+  box-shadow: 0 0 8px #00e5a0;
+  animation: adm-tb-pulse 2s ease-in-out infinite;
+}
+
+@keyframes adm-tb-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* Range toggle */
+.adm-topbar__range {
+  display: flex;
+  background: #121929;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.adm-topbar__range-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: #7a8899;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.adm-topbar__range-btn--active {
+  background: rgba(0,212,255,0.12);
+  color: #00d4ff;
+}
+
+.adm-topbar__range-btn:hover:not(.adm-topbar__range-btn--active) {
+  color: #e8edf5;
+  background: #1a2438;
+}
+
+/* Export button */
+.adm-topbar__export {
+  padding: 6px 14px;
+  background: #1a2438;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #e8edf5;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adm-topbar__export:hover {
+  border-color: #00d4ff;
+  color: #00d4ff;
+}
