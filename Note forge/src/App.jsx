@@ -18,7 +18,7 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [inExamMode, setInExamMode] = useState(false);
-  const [inAdminMode, setInAdminMode] = useState(false); // ✅ NEW
+  const [inAdminMode, setInAdminMode] = useState(false); 
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState(null);
 
