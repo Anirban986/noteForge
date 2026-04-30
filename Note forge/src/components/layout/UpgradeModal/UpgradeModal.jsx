@@ -1,5 +1,7 @@
 import "./UpgradeModal.css";
 import Button from "../../ui/Button/Button";
+import axios from "axios";
+import { useState } from "react";
 
 const FEATURES = [
   "Unlimited PDF uploads",
@@ -10,7 +12,79 @@ const FEATURES = [
   "Performance analytics dashboard",
 ];
 
-export default function UpgradeModal({ onClose, onUpgrade }) {
+export default function UpgradeModal({ onClose }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    try {
+      setLoading(true);
+    
+      
+      // 🔹 Step 1: Create order
+      const { data: order } = await axios.post(
+        "http://localhost:3000/api/payment/create-order",
+        { amount: 99 }, // ₹99
+        {
+          
+             withCredentials: true,
+          
+        }
+      );
+
+      console.log("Order created:", order);
+      
+
+      // 🔹 Step 2: Open Razorpay
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "NoteForge",
+        description: "Premium Subscription",
+        order_id: order.id,
+
+        handler: async function (response) {
+          try {
+            // 🔹 Step 3: Verify payment
+            await axios.post(
+              "http://localhost:3000/api/payment/verify-payment",
+              response,
+              {
+                 withCredentials: true,
+              }
+            );
+
+            alert("🎉 Payment successful! Premium activated.");
+            onClose();
+            window.location.reload(); // optional
+
+          } catch (err) {
+            console.error(err);
+            alert("Payment verification failed");
+          }
+        },
+
+        prefill: {
+          name: "User",
+          email: "user@example.com",
+        },
+
+        theme: {
+          color: "#6366f1",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("Payment initiation failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className="modal-overlay"
@@ -43,9 +117,10 @@ export default function UpgradeModal({ onClose, onUpgrade }) {
           <Button
             size="lg"
             style={{ flex: 1, justifyContent: "center" }}
-            onClick={onUpgrade}
+            onClick={handleUpgrade}
+            disabled={loading}
           >
-            ✨ Upgrade — Get Unlimited Access
+            {loading ? "Processing..." : "✨ Upgrade — Get Unlimited Access"}
           </Button>
           <Button variant="secondary" onClick={onClose}>Later</Button>
         </div>

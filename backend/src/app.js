@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authroutes = require("./routes/user.routes");
 const notesroutes = require("./routes/notes.routes");
+const paymentRoutes = require("./routes/payment.routes");
+
 
 const path = require("path");
 console.log(__dirname);
@@ -28,5 +30,6 @@ app.use(cookieParser());
 
 app.use("/api/auth", authroutes);
 app.use("/api/notes", notesroutes);
+app.use("/api/payment", paymentRoutes);
 
 module.exports = app;
