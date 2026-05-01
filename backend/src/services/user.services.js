@@ -5,8 +5,39 @@ const dotenv = require("dotenv");
 const QRCode = require("qrcode");
 const speakeasy = require("speakeasy");
 const User = require("../models/user.model");
-
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 dotenv.config();
+// Email setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+
+// ================= HELPER =================
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+
+async function sendOTPEmail(email, code) {
+  await transporter.sendMail({
+    to: email,
+    subject: "Verify your email",
+    html: `
+      <div style="font-family:sans-serif;text-align:center;">
+        <h2>Email Verification</h2>
+        <p>Your verification code is:</p>
+        <h1 style="letter-spacing:5px;color:#4CAF50;">${code}</h1>
+        <p>This code will expire in 10 minutes.</p>
+      </div>
+    `,
+  });
+}
 
 async function registerUserService(userData) {
   const { name, username, email, password } = userData;
@@ -24,19 +55,75 @@ async function registerUserService(userData) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+   const otp = generateOTP();
+
   const newUser = await userRepository.createUser({
     name,
     username,
     email,
     password: hashedPassword,
+    isVerified: false,
+    verificationCode: otp,
+    verificationCodeExpires: Date.now() + 10 * 60 * 1000,
   });
 
-  const token = jwt.sign(
-    { id: newUser._id, role: newUser.role || "user" },
-    process.env.JWT_SECRET,
-  );
 
-  return { newUser, token };
+  try {
+    await sendOTPEmail(email, otp);
+  } catch (err) {
+    console.error("Email error:", err);
+    throw new Error("Email_send_failed");
+  }
+
+
+  return { newUser };
+}
+
+// ================= VERIFY OTP =================
+async function verifyCodeService(email, code) {
+  const user = await userRepository.findbyEmailandUsername(null, email);
+
+  if (!user) throw new Error("User_not_found");
+
+  if (user.isVerified) throw new Error("Already_verified");
+
+  if (!user.verificationCode || user.verificationCode !== code) {
+    throw new Error("Invalid_code");
+  }
+
+  if (user.verificationCodeExpires < Date.now()) {
+    throw new Error("Code_expired");
+  }
+
+  user.isVerified = true;
+  user.verificationCode = null;
+  user.verificationCodeExpires = null;
+
+  await user.save();
+
+  return true;
+}
+
+// ================= RESEND OTP =================
+async function resendVerificationService(email) {
+  const user = await userRepository.findbyEmailandUsername(null, email);
+
+  if (!user) throw new Error("User_not_found");
+  if (user.isVerified) throw new Error("Already_verified");
+
+  const otp = generateOTP();
+
+  user.verificationCode = otp;
+  user.verificationCodeExpires = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+  try {
+    await sendOTPEmail(email, otp);
+  } catch (err) {
+    console.error("Email resend error:", err);
+    throw new Error("Email_send_failed");
+  }
 }
 
 async function loginUserService(userData) {
@@ -45,6 +132,10 @@ async function loginUserService(userData) {
   const user = await userRepository.findbyEmailandUsername(null, email);
   if (!user) {
     throw new Error("Invalid_email_or_password");
+  }
+
+  if (!user.isVerified) {
+    throw new Error("Email_not_verified");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -326,4 +417,6 @@ module.exports = {
   getCurrentUser,
   setupMfaService,
   verifyMfaService,
+  verifyCodeService,
+ resendVerificationService,
 };

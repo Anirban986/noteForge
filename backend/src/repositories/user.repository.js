@@ -25,8 +25,20 @@ async function findUserById(id){
     }
 }
 
+async function findByVerificationToken(token) {
+  return await user.findOne({
+    verificationToken: token,
+  });
+}
+
+async function updateUser(user) {
+  return await user.save();
+}
+
 module.exports={
     findbyEmailandUsername,
     createUser,
-    findUserById
+    findUserById,
+    findByVerificationToken,
+    updateUser
 }
