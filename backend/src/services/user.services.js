@@ -7,6 +7,9 @@ const speakeasy = require("speakeasy");
 const User = require("../models/user.model");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { generateforgotPasswordOTP } = require("../utils/otp");
+const { sendForgotPasswordOTP } = require("../utils/mailer");
+
 dotenv.config();
 // Email setup
 const transporter = nodemailer.createTransport({
@@ -23,7 +26,7 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-
+//=================== EMAIL =================
 async function sendOTPEmail(email, code) {
   await transporter.sendMail({
     to: email,
@@ -126,6 +129,8 @@ async function resendVerificationService(email) {
   }
 }
 
+
+//==========LOGIN===========
 async function loginUserService(userData) {
   const { email, password } = userData;
 
@@ -179,6 +184,66 @@ async function loginUserService(userData) {
   };
 }
 
+//=================== FORGOT PASSWORD =================
+async function forgotPassword(email) {
+  const user = await userRepository.findbyEmailandUsername(null, email);
+
+  if (!user) {
+    return { message: "If email exists, OTP sent" };
+  }
+
+  const otp = generateforgotPasswordOTP();
+
+  user.resetPasswordOTP = await bcrypt.hash(otp, 10);
+  user.resetPasswordOTPExpires = Date.now() + 10 * 60 * 1000;
+  user.resetPasswordAttempts = 0;
+
+  await userRepository.updateUser(user);
+
+  await sendForgotPasswordOTP(email, otp);
+
+  return { message: "OTP sent to email" };
+};
+
+
+//=================== RESET PASSWORD =================
+async function resetPassword(email, otp, newPassword) {
+  const user = await userRepository.findbyEmailandUsername(null, email);
+
+  if (!user) {
+    throw new Error("Invalid request");
+  }
+
+  if (user.resetPasswordOTPExpires < Date.now()) {
+    throw new Error("OTP expired");
+  }
+
+  if (user.resetPasswordAttempts >= 5) {
+    throw new Error("Too many attempts. Try again later.");
+  }
+
+  const isMatch = await bcrypt.compare(otp, user.resetPasswordOTP);
+
+  if (!isMatch) {
+    user.resetPasswordAttempts += 1;
+    await userRepository.updateUser(user);
+    throw new Error("Invalid OTP");
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+
+  user.resetPasswordOTP = undefined;
+  user.resetPasswordOTPExpires = undefined;
+  user.resetPasswordAttempts = 0;
+
+  await userRepository.updateUser(user);
+
+  return { message: "Password reset successful" };
+};
+
+
+
+//=================== USER PROFILE =================
 async function userProfileService(userId) {
   const user = await userRepository.findUserById(userId);
   if (!user) {
@@ -196,6 +261,8 @@ async function userProfileService(userId) {
   };
 }
 
+
+//=================== UPGRADE PLAN =================
 async function upgradePlanService(userId) {
   const user = await userRepository.findUserById(userId);
 
@@ -225,6 +292,7 @@ async function upgradePlanService(userId) {
   };
 }
 
+//=================== GET CURRENT USER =================
 async function getCurrentUser(userId) {
   const user = await userRepository.findUserById(userId);
   if (!user) {
@@ -291,7 +359,7 @@ async function setupMfaService(userId) {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   // ✅ Save
-  await User.findByIdAndUpdate(userId, {
+  await userRepository.updateUser(userId, {
     mfaSecret: secret.base32,
     mfaEnabled: false,
   });
@@ -307,6 +375,8 @@ async function setupMfaService(userId) {
   };
 }
 
+
+//=================== VERIFY MFA =================
 async function verifyMfaService(userId, otp) {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("🔍 MFA VERIFICATION STARTED");
@@ -419,4 +489,6 @@ module.exports = {
   verifyMfaService,
   verifyCodeService,
  resendVerificationService,
+ forgotPassword,
+ resetPassword,
 };

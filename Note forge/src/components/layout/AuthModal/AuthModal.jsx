@@ -360,35 +360,69 @@ function LogInScreen({ onSwitch, onForgot, onSuccess }) {
    Forgot Password screen
 ───────────────────────────────*/
 function ForgotScreen({ onBack }) {
+  const [step, setStep] = useState(1); // 1=email, 2=otp, 3=success
+
   const [email, setEmail] = useState("");
+  const [otp, setOTP] = useState("");
+  const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const handleSubmit = () => {
+  // STEP 1 → SEND OTP
+  const handleSendOTP = async () => {
     if (!email.includes("@")) {
-      setError("Enter a valid email address");
-      return;
+      return setError("Enter a valid email");
     }
-    setError("");
-    setLoading(true);
 
-    // TODO: Replace with actual API call
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      setError("");
+
+      await api.post("/api/auth/forgot-password", { email });
+
+      setStep(2);
+    } catch (err) {
+      setError(err.response?.data?.message || "Something went wrong");
+    } finally {
       setLoading(false);
-      setSent(true);
-    }, 1200);
+    }
   };
 
-  if (sent) {
+  // STEP 2 → RESET PASSWORD
+  const handleResetPassword = async () => {
+    if (!otp || password.length < 6) {
+      return setError("Enter valid OTP and password (min 6 chars)");
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      await api.post("/api/auth/reset-password", {
+        email,
+        otp,
+        newPassword: password,
+      });
+
+      setStep(3);
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // STEP 3 → SUCCESS
+  if (step === 3) {
     return (
       <div className="auth-modal__success">
-        <div className="auth-modal__success-icon">📬</div>
-        <div className="auth-modal__success-title">Check your inbox</div>
+        <div className="auth-modal__success-icon">✅</div>
+        <div className="auth-modal__success-title">
+          Password Reset Successful
+        </div>
         <p className="auth-modal__success-desc">
-          We sent a password reset link to
-          <br />
-          <span className="auth-modal__success-email">{email}</span>
+          You can now log in with your new password.
         </p>
         <button className="auth-modal__submit" onClick={onBack}>
           ← Back to Log In
@@ -400,36 +434,92 @@ function ForgotScreen({ onBack }) {
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Forgot password?</h2>
-      <p className="auth-modal__subtitle">
-        No worries. Enter your email and we'll send you a reset link.
-      </p>
 
-      <Field
-        label="Email"
-        type="email"
-        value={email}
-        onChange={(v) => {
-          setEmail(v);
-          setError("");
-        }}
-        placeholder="alex@example.com"
-        error={error}
-      />
+      {step === 1 && (
+        <>
+          <h2 className="auth-modal__title">Forgot password?</h2>
+          <p className="auth-modal__subtitle">
+            Enter your email to receive a verification code.
+          </p>
 
-      <button
-        className="auth-modal__submit"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <div className="auth-modal__spinner" /> Sending…
-          </>
-        ) : (
-          "Send Reset Link →"
-        )}
-      </button>
+          <Field
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(v) => {
+              setEmail(v);
+              setError("");
+            }}
+            placeholder="alex@example.com"
+            error={error}
+          />
+
+          <button
+            className="auth-modal__submit"
+            onClick={handleSendOTP}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="auth-modal__spinner" /> Sending…
+              </>
+            ) : (
+              "Send OTP →"
+            )}
+          </button>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <h2 className="auth-modal__title">Verify OTP</h2>
+          <p className="auth-modal__subtitle">
+            Enter the OTP sent to <b>{email}</b>
+          </p>
+
+          <Field
+            label="OTP"
+            type="text"
+            value={otp}
+            onChange={(v) => {
+              setOTP(v);
+              setError("");
+            }}
+            placeholder="Enter 6-digit OTP"
+            error={error}
+          />
+
+          <Field
+            label="New Password"
+            type="password"
+            value={password}
+            onChange={(v) => {
+              setPassword(v);
+              setError("");
+            }}
+            placeholder="Enter new password"
+          />
+
+          <button
+            className="auth-modal__submit"
+            onClick={handleResetPassword}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="auth-modal__spinner" /> Resetting…
+              </>
+            ) : (
+              "Reset Password →"
+            )}
+          </button>
+
+          <div className="auth-modal__switch">
+            Didn’t receive OTP?
+            <button onClick={handleSendOTP}>Resend</button>
+          </div>
+        </>
+      )}
 
       <div className="auth-modal__switch">
         Remember your password?
