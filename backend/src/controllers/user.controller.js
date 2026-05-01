@@ -176,6 +176,37 @@ async function loginUser(req, res) {
   }
 }
 
+// ================= FORGOT PASSWORD =================
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+
+    const result = await userService.forgotPassword(email);
+
+    res.json(result);
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+// ================= RESET PASSWORD =================
+async function resetPassword(req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const result = await userService.resetPassword(email, otp, newPassword);
+
+    res.json(result);
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// ================= LOGOUT =================
+
 async function logoutUser(req, res) {
   res.clearCookie("token");
   res.status(200).json({
@@ -183,6 +214,8 @@ async function logoutUser(req, res) {
   });
 }
 
+
+// ================= USER PROFILE =================
 async function userProfile(req, res) {
   try {
     const userId = req.user.id;
@@ -204,6 +237,8 @@ async function userProfile(req, res) {
   }
 }
 
+
+// ================= UPGRADE PLAN =================
 async function upgradePlanController(req, res) {
   try {
     const result = await userService.upgradePlanService(req.user.id);
@@ -233,6 +268,8 @@ async function upgradePlanController(req, res) {
   }
 }
 
+
+// ================= GET CURRENT USER =================
 async function getCurrentUserController(req, res) {
   try {
     const userId = req.user.id;
@@ -295,6 +332,8 @@ async function setupMfaController(req, res) {
   }
 }
 
+
+// ================= VERIFY MFA =================
 async function verifyMfaController(req, res) {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📥 VERIFY-MFA ENDPOINT HIT");
@@ -375,6 +414,8 @@ async function verifyMfaController(req, res) {
   }
 }
 
+
+// ================= RESET MFA (Admin Only) =================
 async function resetMfaController(req, res) {
   try {
     const { userId } = req.body;
@@ -403,4 +444,6 @@ module.exports = {
   resetMfaController,
   verifyCode,
   resendVerification,
+  forgotPassword,
+  resetPassword,
 };

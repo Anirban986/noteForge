@@ -17,6 +17,10 @@ router.get("/itsMe",userMiddleware.userMiddleware,userController.getCurrentUserC
 router.post("/verify-code", userController.verifyCode);
 router.post("/resend-code", userController.resendVerification);
 
+//forgot password routes
+router.post("/forgot-password", userController.forgotPassword);
+router.post("/reset-password", userController.resetPassword);
+
 //🔥🔥 For admin only 
  // MFA routes - Public during setup, then protected
 router.post("/verify-mfa",userController.verifyMfaController);
