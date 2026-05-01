@@ -13,7 +13,9 @@ router.get("/profile",userMiddleware.userMiddleware,userController.userProfile);
 router.post("/upgrade",userMiddleware.userMiddleware,userController.upgradePlanController);
 router.get("/itsMe",userMiddleware.userMiddleware,userController.getCurrentUserController);
 
-
+//email verification routes
+router.post("/verify-code", userController.verifyCode);
+router.post("/resend-code", userController.resendVerification);
 
 //🔥🔥 For admin only 
  // MFA routes - Public during setup, then protected

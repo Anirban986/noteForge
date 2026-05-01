@@ -23,6 +23,7 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.4.1",
+    "nodemailer": "^8.0.7",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
     "speakeasy": "^2.0.0"
