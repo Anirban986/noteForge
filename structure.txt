@@ -1,0 +1,213 @@
+── ai_backend/
+│   ├── api/
+│   │   ├── routes/
+│   │   │   ├── ingest.py
+│   │   │   ├── manage.py
+│   │   │   ├── notes.py
+│   │   │   └── query.py
+│   │   └── app.py
+│   ├── chroma_db/
+│   │   ├── ff994a92-5752-4145-929d-e33149a52865/
+│   │   │   ├── data_level0.bin
+│   │   │   ├── header.bin
+│   │   │   ├── index_metadata.pickle
+│   │   │   ├── length.bin
+│   │   │   └── link_lists.bin
+│   │   └── chroma.sqlite3
+│   ├── services/
+│   │   ├── extractor.py
+│   │   ├── generator.py
+│   │   ├── ingest_service.py
+│   │   └── vector_store.py
+│   ├── test/
+│   │   └── test.py
+│   ├── utils/
+│   │   ├── notes_saver.py
+│   │   └── pdf_loader.py
+│   ├── .env
+│   ├── config.py
+│   ├── main.py
+│   ├── requirement.txt
+│   ├── requirements.txt
+│   └── services-account.json
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   │   ├── notes.controllers.js
+│   │   │   ├── payment.controller.js
+│   │   │   └── user.controller.js
+│   │   ├── db/
+│   │   │   └── db.js
+│   │   ├── middleware/
+│   │   │   ├── notes.middleware.js
+│   │   │   ├── premium.middleware.js
+│   │   │   └── user.middleware.js
+│   │   ├── models/
+│   │   │   ├── metadata.model.js
+│   │   │   ├── notes.model.js
+│   │   │   ├── payments.model.js
+│   │   │   └── user.model.js
+│   │   ├── repositories/
+│   │   │   ├── metadata.repository.js
+│   │   │   ├── notes.repository.js
+│   │   │   ├── payment.repository.js
+│   │   │   └── user.repository.js
+│   │   ├── routes/
+│   │   │   ├── notes.routes.js
+│   │   │   ├── payment.routes.js
+│   │   │   └── user.routes.js
+│   │   ├── services/
+│   │   │   ├── notes.services.js
+│   │   │   ├── payment.service.js
+│   │   │   ├── storage.services.js
+│   │   │   └── user.services.js
+│   │   ├── utils/
+│   │   │   ├── mailer.js
+│   │   │   └── otp.js
+│   │   └── app.js
+│   ├── uploads/
+│   │   ├── 69a865a5a30dc146142bbc29/
+│   │   │   ├── 1775662515973_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   │   ├── 69a86ca2bcc61a0a4871e757/
+│   │   │   ├── 1775230783636_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   │   ├── 69a92987dad2bae80d0fa55a/
+│   │   │   ├── 1775231300398_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   │   ├── 69db72bd6d0ce6c8e4bc780d/
+│   │   │   ├── 1775989513513_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   │   └── 69e34f987654efbd0a4e7da9/
+│   │       ├── 1776969486675_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   ├── .env
+│   ├── package.json
+│   └── server.js
+├── Note forge/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── AuthModal/
+│   │   │   │   │   ├── AuthModal.css
+│   │   │   │   │   └── AuthModal.jsx
+│   │   │   │   ├── Navbar/
+│   │   │   │   │   ├── Navbar.css
+│   │   │   │   │   └── Navbar.jsx
+│   │   │   │   ├── Sidebar/
+│   │   │   │   │   ├── Sidebar.css
+│   │   │   │   │   └── Sidebar.jsx
+│   │   │   │   ├── UpgradeModal/
+│   │   │   │   │   ├── UpgradeModal.css
+│   │   │   │   │   └── UpgradeModal.jsx
+│   │   │   │   └── api.js
+│   │   │   ├── pages/
+│   │   │   │   ├── exam/
+│   │   │   │   │   ├── ExamDashboard/
+│   │   │   │   │   │   ├── ExamDashboard.css
+│   │   │   │   │   │   └── ExamDashboard.jsx
+│   │   │   │   │   ├── ExamShell/
+│   │   │   │   │   │   ├── ExamShell.css
+│   │   │   │   │   │   └── ExamShell.jsx
+│   │   │   │   │   ├── ExamUpload/
+│   │   │   │   │   │   ├── ExamUpload.css
+│   │   │   │   │   │   └── ExamUpload.jsx
+│   │   │   │   │   ├── MissingTopics/
+│   │   │   │   │   │   ├── MissingTopics.css
+│   │   │   │   │   │   └── MissingTopics.jsx
+│   │   │   │   │   ├── MockTest/
+│   │   │   │   │   │   ├── MockTest.css
+│   │   │   │   │   │   └── MockTest.jsx
+│   │   │   │   │   ├── PreviousTests/
+│   │   │   │   │   │   ├── PreviousTests.css
+│   │   │   │   │   │   └── PreviousTests.jsx
+│   │   │   │   │   ├── RevisionNotes/
+│   │   │   │   │   │   ├── RevisionNotes.css
+│   │   │   │   │   │   └── RevisionNotes.jsx
+│   │   │   │   │   ├── TopicAnalytics/
+│   │   │   │   │   │   ├── TopicAnalytics.css
+│   │   │   │   │   │   └── TopicAnalytics.jsx
+│   │   │   │   │   └── ExamData.js
+│   │   │   │   └── free/
+│   │   │   │       ├── AdminDashboard/
+│   │   │   │       │   ├── Admin/
+│   │   │   │       │   │   ├── AdminDashboard.css
+│   │   │   │       │   │   ├── AdminDashboard.jsx
+│   │   │   │       │   │   └── AdminRoute.jsx
+│   │   │   │       │   ├── AdminSidebar/
+│   │   │   │       │   │   ├── AdminSidebar.css
+│   │   │   │       │   │   └── AdminSidebar.jsx
+│   │   │   │       │   ├── AdminTopbar/
+│   │   │   │       │   │   ├── AdminTopbar.css
+│   │   │   │       │   │   └── AdminTopbar.jsx
+│   │   │   │       │   ├── CohortTable/
+│   │   │   │       │   │   ├── CohortTable.css
+│   │   │   │       │   │   └── CohortTable.jsx
+│   │   │   │       │   ├── data/
+│   │   │   │       │   │   └── adminData.js
+│   │   │   │       │   ├── ExamTrends/
+│   │   │   │       │   │   ├── ExamTrends.css
+│   │   │   │       │   │   └── ExamTrends.jsx
+│   │   │   │       │   ├── GrowthChart/
+│   │   │   │       │   │   ├── GrowthChart.css
+│   │   │   │       │   │   └── GrowthChart.jsx
+│   │   │   │       │   ├── KpiGrid/
+│   │   │   │       │   │   ├── KpiGrid.css
+│   │   │   │       │   │   └── KpiGrid.jsx
+│   │   │   │       │   ├── NewSubsBar/
+│   │   │   │       │   │   ├── NewSubsBar.css
+│   │   │   │       │   │   └── NewSubsBar.jsx
+│   │   │   │       │   ├── PlanDonut/
+│   │   │   │       │   │   ├── PlanDonut.css
+│   │   │   │       │   │   └── PlanDonut.jsx
+│   │   │   │       │   ├── RecentUsers/
+│   │   │   │       │   │   ├── RecentUsers.css
+│   │   │   │       │   │   └── RecentUsers.jsx
+│   │   │   │       │   ├── RevenueTickers/
+│   │   │   │       │   │   ├── RevenueTickers.css
+│   │   │   │       │   │   └── RevenueTickers.jsx
+│   │   │   │       │   └── TopNotes/
+│   │   │   │       │       ├── TopNotes.css
+│   │   │   │       │       └── TopNotes.jsx
+│   │   │   │       ├── DashboardPage/
+│   │   │   │       │   ├── DashboardPage.css
+│   │   │   │       │   └── DashboardPage.jsx
+│   │   │   │       ├── MyNotesPage/
+│   │   │   │       │   ├── MyNotesPage.css
+│   │   │   │       │   └── MyNotesPage.jsx
+│   │   │   │       ├── NoteViewer/
+│   │   │   │       │   ├── NoteViewer.css
+│   │   │   │       │   └── NoteViewer.jsx
+│   │   │   │       └── UploadNotesPage/
+│   │   │   │           ├── UploadNotesPage.css
+│   │   │   │           └── UploadNotesPage.jsx
+│   │   │   └── ui/
+│   │   │       ├── Badge/
+│   │   │       │   ├── Badge.css
+│   │   │       │   └── Badge.jsx
+│   │   │       ├── Button/
+│   │   │       │   ├── Button.css
+│   │   │       │   └── Button.jsx
+│   │   │       ├── Card/
+│   │   │       │   ├── Card.css
+│   │   │       │   └── Card.jsx
+│   │   │       ├── ProgressBar/
+│   │   │       │   ├── ProgressBar.css
+│   │   │       │   └── ProgressBar.jsx
+│   │   │       └── SectionTitle/
+│   │   │           ├── SectionTitle.css
+│   │   │           └── SectionTitle.jsx
+│   │   ├── data/
+│   │   │   └── mockData.js
+│   │   ├── styles/
+│   │   │   ├── global.css
+│   │   │   └── tokens.js
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── .env
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── README.md
+│   └── vite.config.js
+├── desktop.ini
+└── structure.txt

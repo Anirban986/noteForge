@@ -5,63 +5,71 @@ import Badge from "../../../ui/Badge/Badge";
 import Button from "../../../ui/Button/Button";
 import ProgressBar from "../../../ui/ProgressBar/ProgressBar";
 import api from "../../../layout/api";
-const STEPS = ["Upload", "Extracting Text", "Understanding", "Generating Notes"];
+const STEPS = [
+  "Upload",
+  "Extracting Text",
+  "Understanding",
+  "Generating Notes",
+];
 
-export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequired }) {
+export default function UploadNotesPage({
+  isPremium,
+  onUpgrade,
+  user,
+  onAuthRequired,
+}) {
   const [stage, setStage] = useState("idle");
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [file,setFile]=useState(null);
+  const [file, setFile] = useState(null);
 
   // Gate: if not logged in, show auth modal instead of uploading
   const requireAuth = (action) => {
-    if (!user) { onAuthRequired(); return; }
-    action(); 
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+    action();
   };
 
   const handleUpload = async (file) => {
-  try {
-    setStage("uploading");
-    setProgress(0);
+    try {
+      setStage("uploading");
+      setProgress(0);
 
-    const formData = new FormData();
-    formData.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response=await api.post("/api/notes/premium/upload", 
-      formData, {
-      headers: { "Content-Type": "multipart/form-data" 
-      },
-      onUploadProgress: (progressEvent) => {
-        const percent = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
-        setProgress(percent);
-      },
-    });
+      const response = await api.post("/api/notes/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          setProgress(percent);
+        },
+      });
 
-   
+      // ✅ Upload finished
+      setStage("processing");
+      setStep(1);
 
-    // ✅ Upload finished
-    setStage("processing");
-    setStep(1);
+      //  Use your existing animation
+      runProcessing();
 
-    //  Use your existing animation
-    runProcessing();
-    
-    console.log("upload response:", response.data);
-
-  } catch (err) {
-    if (err.response?.status === 401) {
-      onAuthRequired();
-    } else {
-      console.error(err);
-      setStage("idle");
+      console.log("upload response:", response.data);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onAuthRequired();
+      } else {
+        console.error(err);
+        setStage("idle");
+      }
     }
-  }
-};
+  };
 
   const runProcessing = () => {
     let s = 1;
@@ -79,7 +87,9 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
     <div className="upload-page fade-up">
       <div className="upload-page__header">
         <h1 className="upload-page__title">Upload Notes</h1>
-        <p className="upload-page__subtitle">Upload a PDF and let AI structure it for you.</p>
+        <p className="upload-page__subtitle">
+          Upload a PDF and let AI structure it for you.
+        </p>
       </div>
 
       {/* Plan status bar */}
@@ -88,16 +98,27 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
           <div style={{ flex: 1 }}>
             <div className="upload-limit__label">
               ⭐ Premium Plan — Unlimited uploads
-              {uploadCount > 0 && <span style={{ color: "#9399a6", fontWeight: 400 }}> · {uploadCount} uploaded this session</span>}
+              {uploadCount > 0 && (
+                <span style={{ color: "#9399a6", fontWeight: 400 }}>
+                  {" "}
+                  · {uploadCount} uploaded this session
+                </span>
+              )}
             </div>
-            <ProgressBar value={uploadCount > 0 ? Math.min(uploadCount * 5, 40) : 0} color="#2f9e44" height={6} />
+            <ProgressBar
+              value={uploadCount > 0 ? Math.min(uploadCount * 5, 40) : 0}
+              color="#2f9e44"
+              height={6}
+            />
           </div>
           <Badge color="green">Unlimited ✓</Badge>
         </div>
       ) : (
         <div className="upload-limit">
           <div style={{ flex: 1 }}>
-            <div className="upload-limit__label">Free Plan — 5 / 5 uploads used</div>
+            <div className="upload-limit__label">
+              Free Plan — 5 / 5 uploads used
+            </div>
             <ProgressBar value={100} height={6} />
           </div>
           <Button onClick={onUpgrade}>✨ Upgrade for Unlimited</Button>
@@ -111,10 +132,21 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
             /* ── Premium: fully unlocked dropzone ── */
             <div
               className={`dropzone dropzone--unlocked ${dragOver ? "dropzone--over" : ""}`}
-              onClick={() => requireAuth(runUpload)}
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onClick={() =>
+                requireAuth(() => {
+                  document.getElementById("fileInput").click();
+                })
+              }
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
-              onDrop={e => { e.preventDefault(); setDragOver(false); requireAuth(runUpload); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                requireAuth(runUpload);
+              }}
             >
               <div className="dropzone__icon">📂</div>
               <div className="dropzone__title">Drop your PDF here</div>
@@ -131,7 +163,9 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
                   }
                 }}
               />
-              <div className="dropzone__sub">PDF, JPG, PNG · Up to 50MB · Unlimited uploads</div>
+              <div className="dropzone__sub">
+                PDF, JPG, PNG · Up to 50MB · Unlimited uploads
+              </div>
               <Button
                 size="lg"
                 onClick={(e) => {
@@ -148,19 +182,42 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
               <div
                 className={`dropzone ${dragOver ? "dropzone--over" : ""}`}
                 onClick={() => requireAuth(onUpgrade)}
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
                 onDragLeave={() => setDragOver(false)}
-                onDrop={e => { e.preventDefault(); setDragOver(false); requireAuth(onUpgrade); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  requireAuth(onUpgrade);
+                }}
               >
                 <div className="dropzone__icon">📂</div>
                 <div className="dropzone__title">Drop your PDF here</div>
-                <div className="dropzone__sub">Upgrade required · PDF up to 50MB</div>
-                <Button onClick={e => { e.stopPropagation(); requireAuth(onUpgrade); }}>
+                <div className="dropzone__sub">
+                  Upgrade required · PDF up to 50MB
+                </div>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    requireAuth(onUpgrade);
+                  }}
+                >
                   🔒 Upgrade to Upload
                 </Button>
               </div>
               <div style={{ textAlign: "center" }}>
-                <Button variant="ghost" onClick={() => requireAuth(runUpload)}>👁 Preview AI Processing Demo</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    requireAuth(() => {
+                      document.getElementById("fileInput").click();
+                    })
+                  }
+                >
+                  👁 Preview AI Processing Demo
+                </Button>
               </div>
             </>
           )}
@@ -182,14 +239,20 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
                 <div
                   className="stepper__circle"
                   style={{
-                    background: i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
-                    borderColor: i < step ? "#3b5bdb" : i === step ? "#3b5bdb" : "#e3e6f0",
+                    background:
+                      i < step ? "#3b5bdb" : i === step ? "#eef2ff" : "#f0f2f8",
+                    borderColor:
+                      i < step ? "#3b5bdb" : i === step ? "#3b5bdb" : "#e3e6f0",
                     color: i < step ? "#fff" : "#3b5bdb",
                   }}
                 >
-                  {i < step ? "✓" : i === step
-                    ? <div className="stepper__spin spin" />
-                    : i + 1}
+                  {i < step ? (
+                    "✓"
+                  ) : i === step ? (
+                    <div className="stepper__spin spin" />
+                  ) : (
+                    i + 1
+                  )}
                 </div>
                 <div
                   className="stepper__label"
@@ -219,20 +282,36 @@ export default function UploadNotesPage({ isPremium, onUpgrade, user, onAuthRequ
           <div className="upload-success__header">
             <div className="upload-success__icon">✅</div>
             <div>
-              <div className="upload-success__title">Notes Processed — Organic Chemistry Ch.4</div>
-              <div className="upload-success__meta">18 topics detected · Summary generated · Formulas extracted</div>
+              <div className="upload-success__title">
+                Notes Processed — Organic Chemistry Ch.4
+              </div>
+              <div className="upload-success__meta">
+                18 topics detected · Summary generated · Formulas extracted
+              </div>
             </div>
           </div>
           <div className="upload-success__tags">
-            {["Nucleophilic Sub.", "Electrophiles", "SN1 vs SN2", "Carbocation Stability", "+14 more"].map(t => (
-              <Badge key={t} color="accent">{t}</Badge>
+            {[
+              "Nucleophilic Sub.",
+              "Electrophiles",
+              "SN1 vs SN2",
+              "Carbocation Stability",
+              "+14 more",
+            ].map((t) => (
+              <Badge key={t} color="accent">
+                {t}
+              </Badge>
             ))}
           </div>
           <div className="upload-success__actions">
             <Button>⬇ Download PDF</Button>
             <Button variant="secondary">📋 Copy Summary</Button>
             {isPremium && (
-              <Button variant="ghost" onClick={() => setStage("idle")} style={{ marginLeft: "auto" }}>
+              <Button
+                variant="ghost"
+                onClick={() => setStage("idle")}
+                style={{ marginLeft: "auto" }}
+              >
                 + Upload Another
               </Button>
             )}
