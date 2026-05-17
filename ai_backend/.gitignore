@@ -1,2 +1,4 @@
 #environmental variables
 .env
+chroma_db/
+_pycache__/

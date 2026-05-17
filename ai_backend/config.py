@@ -11,7 +11,7 @@ load_dotenv()
 # ── Gemini (raw SDK — used only for Vision) ──────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL   = "gemini-2.5-flash"
-
+GOOGLE_APPLICATION_CREDENTIALS=os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 # ── OCR quality thresholds ───────────────────────────────
 # Pages passing both checks use Cloud Vision text (no Gemini quota).
 # Pages failing either check fall back to Gemini Vision.
@@ -32,8 +32,8 @@ CHROMA_DB_PATH  = "./chroma_db"
 COLLECTION_NAME = "notes"
 
 # ── LangChain chunking ───────────────────────────────────
-CHUNK_SIZE    = 1000   # characters
-CHUNK_OVERLAP = 150
+CHUNK_SIZE    = 500   # characters
+CHUNK_OVERLAP = 50
 
 # ── Retrieval ────────────────────────────────────────────
 TOP_K = 4

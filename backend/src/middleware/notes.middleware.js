@@ -4,7 +4,8 @@ const multer = require("multer");
 
 //const storage = multer.memoryStorage();
 
-
+const dotenv=require("dotenv");
+dotenv.config();
 const multerS3 = require("multer-s3");
 const s3 = require("../config/s3");
 

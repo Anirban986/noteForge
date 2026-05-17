@@ -29,23 +29,25 @@ import google.genai as genai
 import config
 from google.oauth2 import service_account
 from google.cloud import vision
+
 # ── Clients ───────────────────────────────────────────────
-_gemini  = genai.Client(api_key=config.GEMINI_API_KEY)
+_gemini = genai.Client(api_key=config.GEMINI_API_KEY)
 credentials = service_account.Credentials.from_service_account_file(
-    "services-account.json"
+    config.GOOGLE_APPLICATION_CREDENTIALS
 )
 
 _vision = vision.ImageAnnotatorClient(credentials=credentials)
 
 
 # ── Quality thresholds (tunable in config.py) ─────────────
-MIN_CHARS      = getattr(config, "OCR_MIN_CHARS",      80)   # min chars for "good" page
+MIN_CHARS = getattr(config, "OCR_MIN_CHARS", 80)  # min chars for "good" page
 MIN_WORD_RATIO = getattr(config, "OCR_MIN_WORD_RATIO", 0.5)  # min ratio of real words
 
 
 # ─────────────────────────────────────────────────────────
 #  GOOGLE CLOUD VISION OCR
 # ─────────────────────────────────────────────────────────
+
 
 def _pil_to_bytes(image) -> bytes:
     """Convert a PIL Image to PNG bytes for the Vision API."""
@@ -64,7 +66,7 @@ def _vision_ocr_page(image, page_num: int) -> str:
     try:
         img_bytes = _pil_to_bytes(image)
         vision_img = vision.Image(content=img_bytes)
-        response   = _vision.document_text_detection(image=vision_img)
+        response = _vision.document_text_detection(image=vision_img)
 
         if response.error.message:
             print(f"  [vision] Page {page_num} error: {response.error.message}")
@@ -80,6 +82,7 @@ def _vision_ocr_page(image, page_num: int) -> str:
 # ─────────────────────────────────────────────────────────
 #  QUALITY CHECKER
 # ─────────────────────────────────────────────────────────
+
 
 def _is_good_quality(text: str) -> bool:
     """
@@ -99,9 +102,9 @@ def _is_good_quality(text: str) -> bool:
     if not text or len(text.strip()) < MIN_CHARS:
         return False
 
-    tokens     = text.split()
-    real_words = [t for t in tokens if len(t) >= 2 and re.search(r"[a-zA-Z]", t)]
-    ratio      = len(real_words) / len(tokens) if tokens else 0
+    tokens = text.split()
+    real_words = [t for t in tokens if len(t) >= 2 and re.search(r"[a-zA-Z0-9]", t)]
+    ratio = len(real_words) / len(tokens) if tokens else 0
 
     return ratio >= MIN_WORD_RATIO
 
@@ -126,13 +129,16 @@ def _gemini_ocr_page(image, page_num: int) -> str:
 
     Uses 1 Gemini API request per page — used sparingly.
     """
-    print(f"  [gemini-fallback] Page {page_num} — sending to Gemini Vision...", end=" ", flush=True)
+    print(
+        f"  [gemini-fallback] Page {page_num} — sending to Gemini Vision...",
+        end=" ",
+        flush=True,
+    )
 
     for attempt in range(1, config.MAX_RETRIES + 1):
         try:
             response = _gemini.models.generate_content(
-                model=config.GEMINI_MODEL,
-                contents=[image, _GEMINI_PROMPT]
+                model=config.GEMINI_MODEL, contents=[image, _GEMINI_PROMPT]
             )
             print("done")
             return response.text.strip()
@@ -144,6 +150,7 @@ def _gemini_ocr_page(image, page_num: int) -> str:
                 wait = config.RETRY_DELAY_SECONDS
                 try:
                     import re as _re
+
                     match = _re.search(r"retry.*?(\d+)s", err_str, _re.IGNORECASE)
                     if match:
                         wait = int(match.group(1)) + 2
@@ -152,10 +159,14 @@ def _gemini_ocr_page(image, page_num: int) -> str:
                 print(f"\n  [gemini-fallback] Rate limit. Waiting {wait}s...")
                 time.sleep(wait)
             elif attempt < config.MAX_RETRIES:
-                print(f"\n  [gemini-fallback] Attempt {attempt} failed: {e}. Retrying...")
+                print(
+                    f"\n  [gemini-fallback] Attempt {attempt} failed: {e}. Retrying..."
+                )
                 time.sleep(config.RETRY_DELAY_SECONDS)
             else:
-                print(f"\n  [gemini-fallback] All attempts failed for page {page_num}: {e}")
+                print(
+                    f"\n  [gemini-fallback] All attempts failed for page {page_num}: {e}"
+                )
                 return ""
 
     return ""
@@ -164,6 +175,7 @@ def _gemini_ocr_page(image, page_num: int) -> str:
 # ─────────────────────────────────────────────────────────
 #  MAIN EXTRACTION PIPELINE
 # ─────────────────────────────────────────────────────────
+
 
 def extract_all(images: list, batches: list = None) -> dict[int, str]:
     """
@@ -181,52 +193,83 @@ def extract_all(images: list, batches: list = None) -> dict[int, str]:
     Returns:
         dict of page_number → extracted text string
     """
-    total     = len(images)
+    total = len(images)
     all_pages = {}
 
-    vision_ok      = 0
+    vision_ok = 0
     gemini_fallback = 0
-    failed          = 0
+    failed = 0
 
     print(f"\n[extractor] Hybrid extraction: {total} page(s)")
     print(f"[extractor] Strategy: Cloud Vision → quality check → Gemini fallback\n")
 
     for page_num, image in enumerate(images, start=1):
-        print(f"[extractor] Page {page_num}/{total}", end=" — ", flush=True)
 
-        # ── Step 1: Cloud Vision OCR ──────────────────────
-        print("Cloud Vision...", end=" ", flush=True)
-        ocr_text = _vision_ocr_page(image, page_num)
+        try:
 
-        # ── Step 2: Quality check ─────────────────────────
-        if _is_good_quality(ocr_text):
-            print(f"OK ({len(ocr_text)} chars)")
-            all_pages[page_num] = ocr_text
-            vision_ok += 1
+            print(f"[extractor] Page {page_num}/{total}", end=" — ", flush=True)
 
-        else:
-            # ── Step 3: Gemini fallback ───────────────────
-            char_count = len(ocr_text.strip())
-            print(f"low quality ({char_count} chars) → Gemini fallback")
-            gemini_text = _gemini_ocr_page(image, page_num)
+            # ── Step 1: Cloud Vision OCR ──────────────────
+            print("Cloud Vision...", end=" ", flush=True)
 
-            if gemini_text:
-                all_pages[page_num] = gemini_text
-                gemini_fallback += 1
+            ocr_text = _vision_ocr_page(image, page_num)
+
+            # ── Step 2: Quality check ─────────────────────
+            if _is_good_quality(ocr_text):
+
+                print(f"OK ({len(ocr_text)} chars)")
+
+                all_pages[page_num] = ocr_text
+
+                vision_ok += 1
+
             else:
-                # Both failed — use whatever Vision returned (even if partial)
-                if ocr_text.strip():
-                    print(f"  [extractor] Using partial Vision text for page {page_num}")
-                    all_pages[page_num] = ocr_text
-                    vision_ok += 1
+
+                # ── Step 3: Gemini fallback ───────────────
+                char_count = len(ocr_text.strip())
+
+                print(f"low quality ({char_count} chars) " f"→ Gemini fallback")
+
+                gemini_text = _gemini_ocr_page(image, page_num)
+
+                if gemini_text:
+
+                    all_pages[page_num] = gemini_text
+
+                    gemini_fallback += 1
+
                 else:
-                    print(f"  [extractor] Page {page_num} extraction failed entirely — skipping")
-                    failed += 1
 
-        # Small delay between pages to be nice to APIs
-        if page_num < total:
-            time.sleep(0.3)
+                    # Use partial Vision OCR if available
+                    if ocr_text.strip():
 
+                        print(
+                            f"  [extractor] "
+                            f"Using partial Vision text "
+                            f"for page {page_num}"
+                        )
+
+                        all_pages[page_num] = ocr_text
+
+                        vision_ok += 1
+
+                    else:
+
+                        print(f"  [extractor] " f"Page {page_num} failed entirely")
+
+                        failed += 1
+
+            # Small API pacing delay
+            if page_num < total:
+                time.sleep(0.3)
+
+        finally:
+
+            # ── IMPORTANT: free PIL image memory ──────────
+            try:
+                image.close()
+            except Exception:
+                pass
     # ── Summary ───────────────────────────────────────────
     print(f"\n[extractor] Complete: {total} page(s) processed")
     print(f"  Cloud Vision (good quality) : {vision_ok}")
