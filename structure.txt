@@ -1,4 +1,4 @@
-── ai_backend/
+├── ai_backend/
 │   ├── api/
 │   │   ├── routes/
 │   │   │   ├── ingest.py
@@ -25,6 +25,7 @@
 │   │   ├── notes_saver.py
 │   │   └── pdf_loader.py
 │   ├── .env
+│   ├── .renderignore
 │   ├── config.py
 │   ├── main.py
 │   ├── requirement.txt
@@ -32,6 +33,8 @@
 │   └── services-account.json
 ├── backend/
 │   ├── src/
+│   │   ├── config/
+│   │   │   └── s3.js
 │   │   ├── controllers/
 │   │   │   ├── notes.controllers.js
 │   │   │   ├── payment.controller.js
@@ -66,16 +69,7 @@
 │   │   │   └── otp.js
 │   │   └── app.js
 │   ├── uploads/
-│   │   ├── 69a865a5a30dc146142bbc29/
-│   │   │   ├── 1775662515973_AddressMode_RISC_CISC_Memory_notes@4.pdf
-│   │   ├── 69a86ca2bcc61a0a4871e757/
-│   │   │   ├── 1775230783636_AddressMode_RISC_CISC_Memory_notes@4.pdf
-│   │   ├── 69a92987dad2bae80d0fa55a/
-│   │   │   ├── 1775231300398_AddressMode_RISC_CISC_Memory_notes@4.pdf
-│   │   ├── 69db72bd6d0ce6c8e4bc780d/
-│   │   │   ├── 1775989513513_AddressMode_RISC_CISC_Memory_notes@4.pdf
-│   │   └── 69e34f987654efbd0a4e7da9/
-│   │       ├── 1776969486675_AddressMode_RISC_CISC_Memory_notes@4.pdf
+│   │   
 │   ├── .env
 │   ├── package.json
 │   └── server.js
@@ -208,6 +202,8 @@
 │   ├── index.html
 │   ├── package.json
 │   ├── README.md
+│   ├── vercel.json
 │   └── vite.config.js
 ├── desktop.ini
+├── README.md
 └── structure.txt
