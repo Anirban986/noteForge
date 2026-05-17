@@ -6,7 +6,8 @@ const cors = require("cors");
 const authroutes = require("./routes/user.routes");
 const notesroutes = require("./routes/notes.routes");
 const paymentRoutes = require("./routes/payment.routes");
-
+const dotenv=require("dotenv");
+dotenv.config();
 const path = require("path");
 console.log(__dirname);
 
