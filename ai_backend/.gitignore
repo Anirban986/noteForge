@@ -1,6 +1,20 @@
 #environmental variables
+# Environmental variables
 .env
+
+# Database
 chroma_db/
-_pycache__/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Google service account
 services-account.json
-*.json
+*service-account*.json
+
+# Virtual environment
+venv/
+env/
+.venv/
