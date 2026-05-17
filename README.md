@@ -1,4 +1,4 @@
-# 📚 ShortNotes AI — Intelligent Study Notes Generator
+# 📚 NoteForge— Intelligent Study Notes Generator
 
 > Transform scanned PDFs into smart, exam-ready notes powered by OCR, RAG, and LLMs.
 
