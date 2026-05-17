@@ -16,7 +16,6 @@ Usage:
 import sys
 from services.ingest_service import run as ingest_run
 from services import vector_store, generator
-#from services.generator import ExamContext
 import config
 
 HELP = """
@@ -41,73 +40,82 @@ Handwritten Notes RAG System
 """
 
 
-def _print_blocks(notes):
-    """Shared block pretty-printer for both free and exam mode."""
+def _print_block(block):
+    """Pretty-print a single block."""
+    t = block.type
+
+    if t == "concept":
+        print(f"\n[Concept]  {block.heading}")
+        print("-" * 40)
+        print(f"  {block.explanation}")
+
+    elif t == "keypoints":
+        print(f"\n[Key Points]  {block.heading}")
+        print("-" * 40)
+        for kp in block.points:
+            print(f"  * {kp.point}")
+            print(f"    {kp.note}")
+
+    elif t == "flowchart":
+        print(f"\n[Flowchart]  {block.heading}")
+        print("-" * 40)
+        for i, step in enumerate(block.steps):
+            prefix = "  " if i == 0 else "   |\n   v\n  "
+            desc   = f" -- {step.description}" if step.description else ""
+            print(f"{prefix}{step.label}{desc}")
+
+    elif t == "table":
+        print(f"\n[Table]  {block.heading}")
+        print("-" * 40)
+        col_w = 22
+        print("  " + "  ".join(h.ljust(col_w) for h in block.headers))
+        print("  " + "-" * (len(block.headers) * (col_w + 2)))
+        for row in block.rows:
+            print("  " + "  ".join(str(c).ljust(col_w) for c in row))
+
+    elif t == "mindmap":
+        print(f"\n[Mind Map]  {block.heading}")
+        print("-" * 40)
+        print(f"  {block.root}")
+        for branch in block.branches:
+            print(f"  +-- {branch.label}")
+            for child in branch.children:
+                child_label = child.label if hasattr(child, "label") else str(child)
+                print(f"  |    -- {child_label}")
+
+    elif t == "formula":
+        print(f"\n[Formula]  {block.heading}")
+        print("-" * 40)
+        print(f"  {block.formula}")
+        print(f"  Meaning: {block.meaning}")
+        if block.example:
+            print(f"  Example: {block.example}")
+
+    elif t == "callout":
+        icons = {
+            "exam_tip":  "[EXAM TIP]",
+            "warning":   "[WARNING]",
+            "important": "[IMPORTANT]",
+            "tip":       "[TIP]",
+        }
+        tag = icons.get(block.variant, "[NOTE]")
+        print(f"\n{tag}")
+        print("-" * 40)
+        print(f"  {block.text}")
+
+
+def _print_notes(notes):
+    """Print a TopperNotes object: overview + all topics + their blocks."""
     print("\nOverview")
     print("-" * 40)
     print(notes.overview)
-    print()
 
-    for block in notes.blocks:
-        t = block.type
-
-        if t == "concept":
-            print(f"\n[Concept]  {block.heading}")
-            print("-" * 40)
-            print(f"  {block.explanation}")
-
-        elif t == "keypoints":
-            print(f"\n[Key Points]  {block.heading}")
-            print("-" * 40)
-            for kp in block.points:
-                print(f"  * {kp.point}")
-                print(f"    {kp.note}")
-
-        elif t == "flowchart":
-            print(f"\n[Flowchart]  {block.heading}")
-            print("-" * 40)
-            for i, step in enumerate(block.steps):
-                prefix = "  " if i == 0 else "   |\n   v\n  "
-                desc   = f" -- {step.description}" if step.description else ""
-                print(f"{prefix}{step.label}{desc}")
-
-        elif t == "table":
-            print(f"\n[Table]  {block.heading}")
-            print("-" * 40)
-            col_w = 22
-            print("  " + "  ".join(h.ljust(col_w) for h in block.headers))
-            print("  " + "-" * (len(block.headers) * (col_w + 2)))
-            for row in block.rows:
-                print("  " + "  ".join(str(c).ljust(col_w) for c in row))
-
-        elif t == "mindmap":
-            print(f"\n[Mind Map]  {block.heading}")
-            print("-" * 40)
-            print(f"  {block.root}")
-            for branch in block.branches:
-                print(f"  +-- {branch.label}")
-                for child in branch.children:
-                    print(f"  |    -- {child}")
-
-        elif t == "formula":
-            print(f"\n[Formula]  {block.heading}")
-            print("-" * 40)
-            print(f"  {block.formula}")
-            print(f"  Meaning: {block.meaning}")
-            if block.example:
-                print(f"  Example: {block.example}")
-
-        elif t == "callout":
-            icons = {
-                "exam_tip":  "[EXAM TIP]",
-                "warning":   "[WARNING]",
-                "important": "[IMPORTANT]",
-                "tip":       "[TIP]",
-            }
-            tag = icons.get(block.variant, "[NOTE]")
-            print(f"\n{tag}")
-            print("-" * 40)
-            print(f"  {block.text}")
+    for topic in notes.topics:
+        print(f"\n{'━' * 52}")
+        print(f"  Topic: {topic.topic}")
+        print(f"{'━' * 52}")
+        for block in topic.blocks:
+            _print_block(block)
 
     print()
 
@@ -166,9 +174,10 @@ def cmd_notes(topic: str = None):
     notes  = generator.short_notes(chunks, topic=topic)
 
     print(f"\n{'='*52}")
-    print(f"  TOPPER'S NOTES  (Free Mode)")
+    print(f"  TOPPER'S NOTES  —  {notes.title}")
+    print(f"  (Free Mode)")
     print(f"{'='*52}")
-    _print_blocks(notes)
+    _print_notes(notes)
 
 
 def cmd_exam(args: list):
@@ -186,21 +195,15 @@ def cmd_exam(args: list):
     subject   = args[1]
     chapter   = args[2]
 
-    exam_context = ExamContext(
-        exam=exam_name,
-        subject=subject,
-        chapter=chapter
-    )
-
     search_query = f"{chapter} {subject} {exam_name} key concepts formulas"
     chunks = vector_store.retrieve(search_query, top_k=10)
-    notes  = generator.exam_notes(chunks, exam_context=exam_context)
+    notes  = generator.exam_notes(chunks, exam=exam_name, subject=subject, chapter=chapter)
 
     print(f"\n{'='*52}")
-    print(f"  TOPPER'S NOTES  (Exam Mode — {exam_name})")
-    print(f"  Subject: {subject}  |  Chapter: {chapter}")
+    print(f"  TOPPER'S NOTES  —  {notes.title}")
+    print(f"  Exam: {exam_name}  |  Subject: {subject}  |  Chapter: {chapter}")
     print(f"{'='*52}")
-    _print_blocks(notes)
+    _print_notes(notes)
 
 
 def cmd_count():
