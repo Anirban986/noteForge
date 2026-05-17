@@ -290,51 +290,7 @@ Short Notes (Generated)
 
 ---
 
-## 📁 Project Structure
 
-```
-shortnotes-ai/
-│
-├── frontend/                    # React / Next.js client
-│   ├── components/
-│   │   ├── UploadZone.tsx       # PDF drag-and-drop uploader
-│   │   ├── ModeSelector.tsx     # Normal / Exam mode toggle
-│   │   ├── NotesViewer.tsx      # Rendered notes display
-│   │   ├── MockTest.tsx         # Interactive mock test UI
-│   │   └── ExamInsights.tsx     # Weightage, trends, ML insights
-│   ├── pages/
-│   └── public/
-│
-├── backend/                     # FastAPI backend
-│   ├── main.py                  # Entry point, route registration
-│   ├── routes/
-│   │   ├── upload.py            # File upload → S3
-│   │   ├── notes.py             # Notes generation endpoint
-│   │   └── test.py              # Mock test endpoint
-│   ├── services/
-│   │   ├── s3_service.py        # AWS S3 upload/download
-│   │   ├── ocr_service.py       # OCR text extraction
-│   │   ├── chunker.py           # Text chunking logic
-│   │   ├── embedder.py          # Embedding generation
-│   │   ├── vector_store.py      # Vector DB operations
-│   │   ├── notes_generator.py   # RAG + LLM pipeline
-│   │   ├── exam_analyzer.py     # Exam trends + ML insights
-│   │   └── test_generator.py    # Mock test generation
-│   ├── models/                  # Pydantic schemas
-│   ├── config.py                # Env config loader
-│   └── requirements.txt
-│
-├── ml/                          # ML models for exam insights
-│   ├── trend_model.py           # Historical exam trend detection
-│   ├── weightage_model.py       # Chapter weightage scoring
-│   └── datasets/                # Past exam question datasets
-│
-├── docker-compose.yml           # Local dev stack
-├── .env.example                 # Environment variable template
-└── README.md
-```
-
----
 
 ## 🚀 Getting Started
 
