@@ -1,4 +1,5 @@
 const notesRepository = require("../repositories/notes.repository");
+const note=require("../models/notes.model")
 const userRepository = require("../repositories/user.repository");
 const user = require("../models/user.model");
 const metadataRepo = require("../repositories/metadata.repository");
@@ -7,7 +8,7 @@ const storageService = require("./storage.services");
 const axios = require("axios");
 const FormData = require("form-data");
 
-async function callIngestService(file) {
+/*async function callIngestService(file) {
     try {
         const formData = new FormData();
 
@@ -29,6 +30,28 @@ async function callIngestService(file) {
     } catch (err) {
         throw new Error(
             err.response?.data?.detail || "Ingest failed"
+        );
+    }
+}*/
+
+async function callIngestService(pdfUrl) {
+
+    try {
+
+        const response = await axios.post(
+            "http://localhost:8000/ingest",
+            {
+                pdf_url: pdfUrl
+            }
+        );
+
+        return response.data;
+
+    } catch (err) {
+
+        throw new Error(
+            err.response?.data?.detail ||
+            "Ingest failed"
         );
     }
 }
@@ -62,131 +85,257 @@ async function callAIService(mode, metadata, source) {
     }
 }
 
-async function uploadFileService(userId, file, mode, metadata) {
+async function uploadFileService(
+    userId,
+    file,
+    mode,
+    metadata
+) {
+
+    // ─────────────────────────────────────
+    // Validation
+    // ─────────────────────────────────────
+
     if (!file) {
         throw new Error("File is required");
     }
 
-    const User = await userRepository.findUserById(userId);
+    const User =
+        await userRepository.findUserById(userId);
 
     if (!User) {
         throw new Error("User not found");
     }
 
-    // Free plan check
+    // Free plan limit
     if (User.plan === "free") {
-        const count = await notesRepository.countByuserIdrepository(userId);
+
+        const count =
+            await notesRepository.countByuserIdrepository(userId);
+
         if (count >= 5) {
-            throw new Error("Free plan allows only 5 uploads");
+            throw new Error(
+                "Free plan allows only 5 uploads"
+            );
         }
     }
 
-    // Premium check
-    if (mode === "Exam" && User.plan !== "premium") {
-        throw new Error("Exam mode is premium feature");
+    // Premium-only exam mode
+    if (
+        mode === "Exam" &&
+        User.plan !== "premium"
+    ) {
+        throw new Error(
+            "Exam mode is premium feature"
+        );
     }
 
-    //   Saving file using storage service
-    const fileUrl = await storageService.uploadFile(file, userId);
+    // ─────────────────────────────────────
+    // Upload file to S3
+    // ─────────────────────────────────────
 
-    // calling ingest service
-    const ingestResult = await callIngestService(file);
+    const uploadResult =
+        await storageService.uploadFile(
+            file,
+            userId
+        );
 
-    //  Extract source (document identifier)
-    const source = ingestResult.source;
+    /*
+        uploadResult should return:
 
-    console.log("STEP 1: creating note");
+        {
+            fileUrl,
+            key
+        }
+    */
 
-    //   Saving DB entry
-    const note = await notesRepository.createFilesRepository({
-        userId,
-        OriginalFileName: file.originalname,
-        fileUrl: fileUrl,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        mode: mode || "Normal",
-        aiStatus: "pending"
-    });
+    const { fileUrl, key } = uploadResult;
 
-    // Metadata (premium)
+    // ─────────────────────────────────────
+    // Create DB entry FIRST
+    // ─────────────────────────────────────
+
+    const note =
+        await notesRepository.createFilesRepository({
+
+            userId,
+
+            OriginalFileName:
+                file.originalname,
+
+            fileUrl,
+
+            fileSize:
+                file.size,
+
+            mimeType:
+                file.mimetype,
+
+            mode:
+                mode || "Normal",
+
+            aiStatus:
+                "processing"
+        });
+
+    // ─────────────────────────────────────
+    // Save exam metadata
+    // ─────────────────────────────────────
+
     if (mode === "Exam") {
+
         await metadataRepo.createExamRepository({
-            userId: userId,
-            noteId: note._id,
-            exam: metadata.exam,
-            subject: metadata.subject,
-            chapter: metadata.chapter
+
+            userId,
+
+            noteId:
+                note._id,
+
+            exam:
+                metadata.exam,
+
+            subject:
+                metadata.subject,
+
+            chapter:
+                metadata.chapter
         });
     }
 
-    console.log("STEP 2: note created:", note?._id);
+    // ─────────────────────────────────────
+    // Generate temporary signed URL
+    // ─────────────────────────────────────
+
+    const signedUrl =
+        await storageService.generateSignedUrl(
+            key
+        );
+
+    // ─────────────────────────────────────
+    // Ingest PDF into AI pipeline
+    // ─────────────────────────────────────
+
+    const ingestResult =
+        await callIngestService(
+            signedUrl
+        );
+
+    const source =
+        ingestResult.source;
+
+    // ─────────────────────────────────────
+    // Generate AI notes
+    // ─────────────────────────────────────
 
     let updatedNote = null;
-    //   Calling AI backend
+
     try {
-        const aiResponse = await callAIService(mode, metadata, source);
 
-        console.log("AI RESPONSE:", JSON.stringify(aiResponse.data, null, 2));
+        const aiResponse =
+            await callAIService(
+                mode,
+                metadata,
+                source
+            );
 
-        const aiData = aiResponse.data;
+        const aiData =
+            aiResponse.data;
 
-        const aiBlocks = aiData?.blocks || [];
-        const overview = aiData?.overview || null;
-        const title = aiData?.title || "Untitled Note";
+        const title =
+            aiData?.title ||
+            "Untitled Note";
 
-        console.log("AI RAW DATA:", JSON.stringify(aiData, null, 2));
+        const overview =
+            aiData?.overview ||
+            "";
 
-        const topics = aiData?.topics || [];
+        let topics =
+            aiData?.topics || [];
+
         let allBlocks = [];
 
-        //  CASE 1: Proper topics returned
-        if (Array.isArray(topics) && topics.length > 0) {
+        // Proper topics format
+        if (
+            Array.isArray(topics) &&
+            topics.length > 0
+        ) {
+
             topics.forEach(topic => {
-                if (Array.isArray(topic.blocks)) {
-                    allBlocks.push(...topic.blocks);
+
+                if (
+                    Array.isArray(topic.blocks)
+                ) {
+                    allBlocks.push(
+                        ...topic.blocks
+                    );
                 }
             });
         }
 
-        //  CASE 2: LLM returned OLD format → fallback
-        else if (Array.isArray(aiData?.blocks) && aiData.blocks.length > 0) {
-
-            console.warn("⚠️ AI returned old block format, auto-wrapping into topic");
+        // Old fallback format
+        else if (
+            Array.isArray(aiData?.blocks) &&
+            aiData.blocks.length > 0
+        ) {
 
             topics = [
                 {
-                    title: title || "General",
+                    topic: title,
                     blocks: aiData.blocks
                 }
             ];
 
-            allBlocks = [...aiData.blocks];
+            allBlocks = [
+                ...aiData.blocks
+            ];
         }
 
-        //  STILL invalid
         else {
-            throw new Error("Invalid AI response: No topics or blocks generated");
-        }
-        await notesRepository.updateNoteWithAI(note._id, {
-            title,
-            overview: overview,
-            topics,
-            blocks: allBlocks,
-            aiStatus: "completed"
-        });
 
-        updatedNote = await notesRepository.findByIdrepository(note._id);
+            throw new Error(
+                "Invalid AI response"
+            );
+        }
+
+        // ─────────────────────────────────
+        // Update note with AI output
+        // ─────────────────────────────────
+
+        await notesRepository.updateNoteWithAI(
+            note._id,
+            {
+                title,
+                overview,
+                topics,
+                blocks: allBlocks,
+                aiStatus: "completed"
+            }
+        );
+
+        updatedNote =
+            await notesRepository.findByIdrepository(
+                note._id
+            );
 
     } catch (err) {
-        console.error("AI Error:", err.message);
 
-        await notesRepository.markeAsFailed(note._id, err.message);
+        console.error(
+            "AI ERROR:",
+            err.message
+        );
 
-        updatedNote = await notesRepository.findByIdrepository(note._id);
+        await notesRepository.markeAsFailed(
+            note._id,
+            err.message
+        );
+
+        updatedNote =
+            await notesRepository.findByIdrepository(
+                note._id
+            );
     }
 
     return updatedNote || note;
-
 }
 
 
