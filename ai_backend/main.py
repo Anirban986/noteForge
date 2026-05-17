@@ -16,7 +16,7 @@ Usage:
 import sys
 from services.ingest_service import run as ingest_run
 from services import vector_store, generator
-from services.generator import ExamContext
+#from services.generator import ExamContext
 import config
 
 HELP = """
