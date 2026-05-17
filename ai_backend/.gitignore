@@ -6,7 +6,7 @@
 chroma_db/
 
 # Python cache
-__pycache__/
+_pycache__/
 *.pyc
 *.pyo
 
