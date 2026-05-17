@@ -10,16 +10,29 @@ const paymentRoutes = require("./routes/payment.routes");
 const path = require("path");
 console.log(__dirname);
 
+const allowedOrigins = [
+  "http://localhost:5173", // Vite dev
+  process.env.CLIENT_URL   // future deployed frontend
+];
+
 
 // CORS configuration
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    credentials: true, // Allow cookies cross-origin
+    origin: function (origin, callback) {
+      // allow REST tools like Postman (no origin)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Blocked by CORS"));
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["set-cookie"],
-  }),
+  })
 );
 
 
