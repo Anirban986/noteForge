@@ -8,31 +8,7 @@ const storageService = require("./storage.services");
 const axios = require("axios");
 const FormData = require("form-data");
 
-/*async function callIngestService(file) {
-    try {
-        const formData = new FormData();
 
-        formData.append("file", file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype
-        });
-
-        const response = await axios.post(
-            "http://localhost:8000/ingest",
-            formData,
-            {
-                headers: formData.getHeaders()
-            }
-        );
-
-        return response.data;
-
-    } catch (err) {
-        throw new Error(
-            err.response?.data?.detail || "Ingest failed"
-        );
-    }
-}*/
 
 async function callIngestService(pdfUrl) {
 
