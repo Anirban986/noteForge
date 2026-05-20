@@ -1,46 +1,102 @@
 """
-api/app.py — FastAPI application entry point
+api/app.py
+-----------
 
-Run with:
-    uvicorn api.app:app --reload --port 8000
-
-Interactive docs:
-    http://localhost:8000/docs
+Production-ready FastAPI entry point.
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import ingest, query, notes, manage
+
+from api.routes import (
+    ingest,
+    query,
+    notes,
+    manage
+)
+
+import config
 
 
-# Initialize FastAPI app with metadata
+# ─────────────────────────────────────────────
+# FastAPI App
+# ─────────────────────────────────────────────
+
 app = FastAPI(
-    title="Handwritten Notes RAG API",
+    title="NoteForge AI API",
+    version="2.0.0",
     description=(
-        "Upload scanned handwritten PDFs and query them using RAG.\n\n"
-        "Vision extraction: raw Gemini SDK with batching + rate-limit handling.\n"
-        "RAG pipeline: LangChain (chunking, embeddings, ChromaDB, LCEL chains)."
-    ),
-    version="2.0.0"
+        "AI-powered handwritten notes processing system.\n\n"
+        "Features:\n"
+        "- OCR extraction\n"
+        "- Gemini fallback OCR\n"
+        "- RAG retrieval\n"
+        "- AI-generated notes\n"
+        "- Vector search"
+    )
 )
 
 
-# CORS middleware to allow requests from any origin (for development purposes)
+# ─────────────────────────────────────────────
+# CORS
+# ─────────────────────────────────────────────
+
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    config.FRONTEND_URL,
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   
+    allow_origins=[
+        origin
+        for origin in ALLOWED_ORIGINS
+        if origin
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-#using /health for health checks, so not including it in the router tags
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "fastapi"}
 
-# Include API routers for different functionalities
+# ─────────────────────────────────────────────
+# Health Check
+# ─────────────────────────────────────────────
 
-app.include_router(ingest.router, tags=["Ingestion"])
-app.include_router(query.router,  tags=["Query"])
-app.include_router(notes.router,  tags=["Notes"])
-app.include_router(manage.router, tags=["Management"])
+@app.get("/health", tags=["Health"])
+async def health():
+    return {
+        "status": "ok",
+        "service": "fastapi",
+        "version": "2.0.0"
+    }
+
+
+# ─────────────────────────────────────────────
+# API Routers
+# ─────────────────────────────────────────────
+
+app.include_router(
+    ingest.router,
+    prefix="/api",
+    tags=["Ingestion"]
+)
+
+app.include_router(
+    query.router,
+    prefix="/api",
+    tags=["Query"]
+)
+
+app.include_router(
+    notes.router,
+    prefix="/api",
+    tags=["Notes"]
+)
+
+app.include_router(
+    manage.router,
+    prefix="/api",
+    tags=["Management"]
+)

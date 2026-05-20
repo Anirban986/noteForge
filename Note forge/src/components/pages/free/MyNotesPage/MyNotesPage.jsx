@@ -11,17 +11,21 @@ export default function MyNotesPage({ isPremium, onUpgrade }) {
   const [openNote, setOpenNote] = useState(null);
 
   useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const res = await api.get("/api/notes/premium/myNotes?mode=Normal");
-        setNotes(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  const fetchNotes = async () => {
+    try {
+      const res = await api.get("/api/notes/premium/myNotes?mode=Normal");
 
-    fetchNotes();
-  }, []);
+      console.log("NOTES RESPONSE:", res.data);
+      console.log(Array.isArray(res.data));
+
+      setNotes(res.data.notes || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchNotes();
+}, []);
 
   //  If note is opened → show viewer
   if (openNote) {

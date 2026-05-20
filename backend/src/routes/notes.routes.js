@@ -1,7 +1,7 @@
 const express=require("express");
 const router=express.Router();
 const notesController=require("../controllers/notes.controllers");
-const {upload}=require("../middleware/notes.middleware");
+const upload=require("../middleware/notes.middleware");
 const userMiddleware=require("../middleware/user.middleware");
 const premiumMiddleware= require("../middleware/premium.middleware");
 

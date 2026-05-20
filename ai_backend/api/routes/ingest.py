@@ -1,103 +1,59 @@
-"""
-api/routes/ingest.py
---------------------
-POST /ingest
+from fastapi import APIRouter, HTTPException, Header
 
-Receives S3 PDF URL
-and runs ingestion pipeline.
-"""
+from fastapi.concurrency import run_in_threadpool
 
-from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, HttpUrl
 
-from services.ingest_service import run
+import logging
 import config
+
+from services.ingest_service import run
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
-# ──────────────────────────────────────────────────────────
-# Request Schema
-# ──────────────────────────────────────────────────────────
 
 class IngestRequest(BaseModel):
 
     pdf_url: HttpUrl
+    source: str | None = None
+    
 
-
-# ──────────────────────────────────────────────────────────
-# Route
-# ──────────────────────────────────────────────────────────
 
 @router.post("/ingest")
-async def ingest(
+async def ingest(request: IngestRequest, x_api_key: str = Header(...)):
 
-    request: IngestRequest,
+    if x_api_key != config.INTERNAL_API_KEY:
 
-    batch_size: int = Query(
-        default=config.BATCH_SIZE,
-        ge=1,
-        le=5,
-        description=(
-            "Pages per OCR batch."
-        )
-    )
-):
-    """
-    Ingest PDF from S3 URL.
-
-    Flow:
-        S3 URL
-            ↓
-        temporary download
-            ↓
-        OCR
-            ↓
-        chunking
-            ↓
-        embeddings
-            ↓
-        ChromaDB
-    """
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
 
-        result = run(
-            pdf_url=str(request.pdf_url),
-            batch_size=batch_size
+        result = await run_in_threadpool(
+            run,
+            pdf_url=request.pdf_url,
+            source=request.source
+            
+            # batch_size=config.BATCH_SIZE
         )
 
         return {
-
-            "message":
-                "PDF ingested successfully.",
-
-            "source":
-                result["source"],
-
-            "pages":
-                result["pages"],
-
-            "chunks":
-                result["chunks"],
-
-            "failed":
-                result["failed"],
-
-            "batch_size":
-                batch_size
+            "success": True,
+            "source": result["source"],
+            "pages": result["pages"],
+            "chunks": result["chunks"],
+            "failed": result["failed"],
         }
 
     except ValueError as e:
 
-        raise HTTPException(
-            status_code=422,
-            detail=str(e)
-        )
+        logger.exception("Validation error during ingestion")
 
-    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
-        raise HTTPException(
-            status_code=500,
-            detail=f"Ingestion failed: {str(e)}"
-        )
+    except Exception:
+
+        logger.exception("Ingestion pipeline failed")
+
+        raise HTTPException(status_code=500, detail="Ingestion failed")
