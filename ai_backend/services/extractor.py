@@ -30,11 +30,18 @@ import config
 from google.oauth2 import service_account
 from google.cloud import vision
 
-# ── Clients ───────────────────────────────────────────────
 _gemini = genai.Client(api_key=config.GEMINI_API_KEY)
-credentials = service_account.Credentials.from_service_account_file(
-    config.GOOGLE_APPLICATION_CREDENTIALS
-)
+# ── Clients ───────────────────────────────────────────────
+if config.GOOGLE_SERVICE_ACCOUNT_INFO:
+    # Deployment (Render)
+    credentials = service_account.Credentials.from_service_account_info(
+        config.GOOGLE_SERVICE_ACCOUNT_INFO
+    )
+else:
+    # Local development
+    credentials = service_account.Credentials.from_service_account_file(
+        config.GOOGLE_SERVICE_ACCOUNT_FILE
+    )
 
 _vision = vision.ImageAnnotatorClient(credentials=credentials)
 

@@ -1,89 +1,166 @@
-const notesService = require("../services/notes.services");
+const notesService =
+    require("../services/notes.services");
 
-async function uploadNotesController(req, res) {
+async function uploadNotesController(
+    req,
+    res,
+    next
+) {
+
     try {
-        const userId = req.user.id;
-        const file = req.file;
-        console.log("REQ.FILE:", req.file);
-        const { mode, exam, subject, chapter } = req.body;
-        const metadata = {
-            exam,
-            subject,
-            chapter
-        };
-        const note = await notesService.uploadFileService(userId, file, mode, metadata);
 
-        res.status(201).json({
-            message: "File uploaded successfully",
+        const note =
+            await notesService.uploadFileService(
+
+                req.user.id,
+
+                req.file,
+
+                req.body.mode,
+
+                {
+                    exam:
+                        req.body.exam,
+
+                    subject:
+                        req.body.subject,
+
+                    chapter:
+                        req.body.chapter,
+
+                    topic:
+                        req.body.topic
+                }
+            );
+
+        return res.status(201).json({
+
+            success: true,
+
+            message:
+                "File uploaded successfully",
+
             note
         });
-    } catch (error) {
-        res.status(401).json({
-            message: error.message
-        })
-    }
-}
-
-async function getNotesController(req, res) {
-    try {
-        const userId = req.user.id;
-
-        const filters = {
-            mode: req.query.mode || "Normal",  
-            exam: req.query.exam,
-            subject: req.query.subject,
-            chapter: req.query.chapter
-        };
-
-        console.log("USER ID:", userId);
-        console.log("FILTERS:", filters);
-
-        const notes = await notesService.getUserNotesService(userId, filters);
-
-        res.status(200).json(notes);
 
     } catch (err) {
-        console.error("GET NOTES ERROR:", err); 
-        res.status(500).json({
-            message: err.message
-        });
+
+        next(err);
     }
 }
 
-async function deleteNotesController(req, res) {
+
+async function getNotesController(
+    req,
+    res,
+    next
+) {
+
     try {
-        const { id } = req.params;
 
-        const note = await notesService.deleteNoteService(id);
+        const filters = {
 
-        res.status(200).json({
-            message: "Note deleted successfully",
+            mode:
+                req.query.mode || "Normal",
+
+            exam:
+                req.query.exam,
+
+            subject:
+                req.query.subject,
+
+            chapter:
+                req.query.chapter
+        };
+
+        const notes =
+            await notesService.getUserNotesService(
+
+                req.user.id,
+
+                filters
+            );
+
+        return res.status(200).json({
+
+            success: true,
+
+            notes
+        });
+
+    } catch (err) {
+
+        next(err);
+    }
+}
+
+
+async function deleteNotesController(
+    req,
+    res,
+    next
+) {
+
+    try {
+
+        const note =
+            await notesService.deleteNoteService(
+
+                req.params.id,
+
+                req.user.id
+            );
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Note deleted successfully",
+
             note
         });
 
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    } catch (err) {
+
+        next(err);
     }
 }
 
-async function countDocumentController(req,res){
-    try{
-        const userId=req.user.id;
-        const count=await notesService.countDocumentsService(userId);
-        console.log("NOTES COUNT:",count);
-        res.status(200).json({
-            message:"Note counted successfully",
-            count
+
+async function countDocumentController(
+    req,
+    res,
+    next
+) {
+
+    try {
+
+        const counts =
+            await notesService.countDocumentsService(
+                req.user.id
+            );
+
+        return res.status(200).json({
+
+            success: true,
+
+            counts
         });
-    }catch(err){
-        res.status(500).json({message:err.message});
-        
+
+    } catch (err) {
+
+        next(err);
     }
 }
 
 module.exports = {
+
     uploadNotesController,
+
     getNotesController,
+
     deleteNotesController,
+
     countDocumentController
-}
+};

@@ -1,26 +1,23 @@
 const {
     S3Client,
-    PutObjectCommand,
-    GetObjectCommand
+    GetObjectCommand,
+    DeleteObjectCommand
 } = require("@aws-sdk/client-s3");
-
-const dotenv=require("dotenv");
-dotenv.config();
 
 const {
     getSignedUrl
 } = require("@aws-sdk/s3-request-presigner");
 
+const dotenv = require("dotenv");
 
-// ─────────────────────────────────────────
-// S3 Client
-// ─────────────────────────────────────────
+dotenv.config();
 
 const s3Client = new S3Client({
 
     region: process.env.AWS_REGION,
 
     credentials: {
+
         accessKeyId:
             process.env.AWS_ACCESS_KEY_ID,
 
@@ -29,58 +26,15 @@ const s3Client = new S3Client({
     }
 });
 
-
-// ─────────────────────────────────────────
-// Upload File
-// ─────────────────────────────────────────
-
-async function uploadFile(file, userId) {
-
-    const key =
-        `${userId}/${Date.now()}_${file.originalname}`;
-
-    const command =
-        new PutObjectCommand({
-
-            Bucket:
-                process.env.S3_BUCKET_NAME,
-
-            Key:
-                key,
-
-            Body:
-                file.buffer,
-
-            ContentType:
-                file.mimetype
-        });
-
-    await s3Client.send(command);
-
-    const fileUrl =
-        `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-
-    return {
-        fileUrl,
-        key
-    };
-}
-
-
-// ─────────────────────────────────────────
-// Generate Signed URL
-// ─────────────────────────────────────────
-
 async function generateSignedUrl(key) {
 
     const command =
         new GetObjectCommand({
 
             Bucket:
-                process.env.S3_BUCKET_NAME,
+                process.env.AWS_BUCKET_NAME,
 
-            Key:
-                key
+            Key: key
         });
 
     return await getSignedUrl(
@@ -92,12 +46,21 @@ async function generateSignedUrl(key) {
     );
 }
 
+async function deleteFile(key) {
 
-// ─────────────────────────────────────────
-// Exports
-// ─────────────────────────────────────────
+    const command =
+        new DeleteObjectCommand({
+
+            Bucket:
+                process.env.AWS_BUCKET_NAME,
+
+            Key: key
+        });
+
+    return await s3Client.send(command);
+}
 
 module.exports = {
-    uploadFile,
-    generateSignedUrl
+    generateSignedUrl,
+    deleteFile
 };

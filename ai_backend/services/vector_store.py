@@ -2,112 +2,135 @@
 services/vector_store.py
 ------------------------
 
-Lightweight production-ready vector store for MVP deployment.
+Production-ready scalable vector store.
 
 Architecture:
-    Text
-      ↓ chunking
+    OCR Text
+        ↓
+    Chunking
+        ↓
     Gemini Embeddings API
-      ↓
+        ↓
     ChromaDB
 
-Why this version?
-- Removes sentence-transformers
-- Removes torch dependency
-- Reduces RAM usage dramatically
-- Better for Render/Railway free tier
-- Keeps proper RAG architecture
-
-Requirements:
-    pip install chromadb langchain-chroma langchain-google-genai
-
-Environment:
-    GEMINI_API_KEY=your_key
+Optimized for:
+- Render deployment
+- Low RAM usage
+- No torch dependency
+- Batched embeddings
+- Multi-user isolation
+- Better retrieval quality
 """
 
+from typing import List
+import logging
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
 from langchain_chroma import Chroma
+
 from langchain_core.documents import Document
 
 import config
 
+# ─────────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────────
+
+logger = logging.getLogger(__name__)
+
 
 # ─────────────────────────────────────────────────────────
-#  TEXT SPLITTER
+# Constants
+# ─────────────────────────────────────────────────────────
+
+EMBED_BATCH_SIZE = 50
+
+MIN_CHUNK_LENGTH = 30
+
+MIN_RELEVANCE_SCORE = 0.55
+
+
+# ─────────────────────────────────────────────────────────
+# Text Splitter
 # ─────────────────────────────────────────────────────────
 
 _splitter = RecursiveCharacterTextSplitter(
     chunk_size=config.CHUNK_SIZE,
     chunk_overlap=config.CHUNK_OVERLAP,
-    separators=[
-        "\n\n",
-        "\n",
-        ". ",
-        " ",
-        ""
-    ]
+    separators=["\n\n", "\n", ". ", " ", ""],
 )
 
 
 # ─────────────────────────────────────────────────────────
-#  GEMINI EMBEDDINGS
+# Gemini Embeddings
 # ─────────────────────────────────────────────────────────
 
 _embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/text-embedding-004",
-    google_api_key=config.GEMINI_API_KEY,
+    model="models/gemini-embedding-001", google_api_key=config.GEMINI_API_KEY
 )
 
 
 # ─────────────────────────────────────────────────────────
-#  CHROMA VECTOR DATABASE
+# ChromaDB Factory
 # ─────────────────────────────────────────────────────────
 
-_db = Chroma(
-    collection_name=config.COLLECTION_NAME,
-    embedding_function=_embeddings,
-    persist_directory=config.CHROMA_DB_PATH,
-)
 
-
-# ─────────────────────────────────────────────────────────
-#  HELPERS
-# ─────────────────────────────────────────────────────────
-
-def _clean_text(text: str) -> str:
+def get_db():
     """
-    Basic cleanup before embedding.
+    Return ChromaDB instance.
     """
-    return (
-        text.replace("\x00", " ")
-            .strip()
+
+    return Chroma(
+        collection_name=config.COLLECTION_NAME,
+        embedding_function=_embeddings,
+        persist_directory=config.CHROMA_DB_PATH,
     )
 
 
 # ─────────────────────────────────────────────────────────
-#  PUBLIC API
+# Helpers
 # ─────────────────────────────────────────────────────────
 
-def store(
+
+def _clean_text(text: str) -> str:
+    """
+    Basic text cleanup.
+    """
+
+    return text.replace("\x00", " ").replace("\r", " ").strip()
+
+
+def _is_valid_chunk(text: str) -> bool:
+    """
+    Skip useless OCR garbage.
+    """
+
+    if not text:
+        return False
+
+    cleaned = text.strip()
+
+    if len(cleaned) < MIN_CHUNK_LENGTH:
+        return False
+
+    return True
+
+
+# ─────────────────────────────────────────────────────────
+# Build Documents
+# ─────────────────────────────────────────────────────────
+
+
+def _build_documents(
     pages: dict[int, str],
-    source: str
-) -> int:
+    source: str,
+) -> List[Document]:
     """
-    Chunk pages and store embeddings in ChromaDB.
-
-    Args:
-        pages:
-            dict of page_number → extracted text
-
-        source:
-            PDF filename (without extension)
-
-    Returns:
-        Number of stored chunks
+    Convert OCR pages into LangChain docs.
     """
-
-    # ── Convert pages → LangChain Documents ─────────────
 
     raw_docs = []
 
@@ -115,7 +138,7 @@ def store(
 
         cleaned = _clean_text(text)
 
-        if not cleaned:
+        if not _is_valid_chunk(cleaned):
             continue
 
         raw_docs.append(
@@ -124,134 +147,202 @@ def store(
                 metadata={
                     "source": source,
                     "page": page_num,
-                }
+                },
             )
         )
 
-    if not raw_docs:
-        raise ValueError(
-            "No valid text content to store."
-        )
+    return raw_docs
 
-    # ── Split into chunks ───────────────────────────────
+
+# ─────────────────────────────────────────────────────────
+# Store Embeddings
+# ─────────────────────────────────────────────────────────
+
+
+def store_embeddings(
+    pages: dict[int, str],
+    source: str,
+) -> int:
+    """
+    Store document embeddings.
+
+    Returns:
+        Number of chunks stored
+    """
+
+    logger.info("Preparing documents")
+
+    raw_docs = _build_documents(
+        pages=pages,
+        source=source,
+    )
+
+    if not raw_docs:
+
+        raise ValueError("No valid content to store")
+
+    # ─────────────────────────────────────
+    # Split documents
+    # ─────────────────────────────────────
 
     chunks = _splitter.split_documents(raw_docs)
 
-    print(
-        f"[vector_store] "
-        f"{len(chunks)} chunks "
-        f"from {len(raw_docs)} pages"
-    )
+    chunks = [chunk for chunk in chunks if _is_valid_chunk(chunk.page_content)]
 
-    # ── Store embeddings in Chroma ─────────────────────
+    if not chunks:
 
-    print(
-        "[vector_store] "
-        "Generating embeddings...",
-        end=" ",
-        flush=True
-    )
+        raise ValueError("No valid chunks generated")
 
-    _db.add_documents(chunks)
+    logger.info(f"{len(chunks)} chunks generated")
 
-    print("done")
+    # ─────────────────────────────────────
+    # Vector DB
+    # ─────────────────────────────────────
 
-    print(
-        f"[vector_store] "
-        f"Stored in collection "
-        f"'{config.COLLECTION_NAME}'"
-    )
+    db = get_db()
 
-    return len(chunks)
+    # ─────────────────────────────────────
+    # Batched embeddings
+    # ─────────────────────────────────────
+
+    logger.info("Generating embeddings")
+
+    total_chunks = len(chunks)
+
+    for i in range(0, total_chunks, EMBED_BATCH_SIZE):
+
+        batch = chunks[i : i + EMBED_BATCH_SIZE]
+
+        db.add_documents(batch)
+
+        logger.info(
+            f"Embedded batch "
+            f"{i + 1}"
+            f"-"
+            f"{min(i + EMBED_BATCH_SIZE, total_chunks)}"
+            f"/{total_chunks}"
+        )
+
+    logger.info("Embeddings stored successfully")
+
+    return total_chunks
 
 
-def retrieve(
-    query: str,
-    top_k: int = config.TOP_K
-) -> list[dict]:
+# ─────────────────────────────────────────────────────────
+# Retrieve Chunks
+# ─────────────────────────────────────────────────────────
+
+
+def retrieve(query: str, top_k: int = config.TOP_K) -> list[dict]:
     """
-    Retrieve most relevant chunks.
+    Retrieve relevant chunks.
 
-    Args:
-        query:
-            User question
-
-        top_k:
-            Number of chunks to return
-
-    Returns:
-        List of formatted chunk dicts
+    Multi-user safe.
     """
 
     if not query.strip():
         return []
 
-    results = _db.similarity_search_with_relevance_scores(
-        query,
-        k=top_k
-    )
+    db = get_db()
+
+    results = db.similarity_search_with_relevance_scores(query, k=top_k)
 
     formatted = []
 
     for doc, score in results:
 
-        formatted.append({
-            "text":
-                doc.page_content,
+        print("RELEVANCE:", score)
 
-            "source":
-                doc.metadata.get(
-                    "source",
-                    "unknown"
-                ),
+    formatted.append(
+        {
+            "text": doc.page_content,
+            "source": doc.metadata.get("source", "unknown"),
+            "page": doc.metadata.get("page", 0),
+            "note_id": doc.metadata.get("note_id"),
+            "relevance": round(float(score) * 100, 1),
+        }
+    )
 
-            "page":
-                doc.metadata.get(
-                    "page",
-                    0
-                ),
-
-            "relevance":
-                round(float(score) * 100, 1)
-        })
+    logger.info(f"{len(formatted)} chunks retrieved")
 
     return formatted
 
 
-def as_retriever(
-    top_k: int = config.TOP_K
-):
+# ─────────────────────────────────────────────────────────
+# Retriever
+# ─────────────────────────────────────────────────────────
+
+
+def as_retriever(top_k: int = config.TOP_K):
     """
     Return LangChain retriever.
     """
 
-    return _db.as_retriever(
-        search_kwargs={
-            "k": top_k
-        }
-    )
+    db = get_db()
+
+    return db.as_retriever(search_kwargs={"k": top_k})
+
+
+# ─────────────────────────────────────────────────────────
+# Count Chunks
+# ─────────────────────────────────────────────────────────
 
 
 def count() -> int:
     """
-    Return total chunk count.
+    Count stored vectors.
     """
 
     try:
-        return _db._collection.count()
+
+        db = get_db()
+
+        return db._collection.count()
 
     except Exception:
+
+        logger.exception("Failed to count vectors")
+
         return 0
+
+
+# ─────────────────────────────────────────────────────────
+# Delete Note Embeddings
+# ─────────────────────────────────────────────────────────
+
+
+def delete_note_vectors(note_id: str):
+    """
+    Delete embeddings for a note.
+    """
+
+    try:
+
+        db = get_db()
+
+        db._collection.delete(where={"note_id": note_id})
+
+        logger.info(f"Deleted vectors " f"for note {note_id}")
+
+    except Exception:
+
+        logger.exception("Failed to delete vectors")
+
+
+# ─────────────────────────────────────────────────────────
+# Dangerous Admin Utility
+# ─────────────────────────────────────────────────────────
 
 
 def clear():
     """
-    Delete the entire collection.
+    Delete entire collection.
+
+    DEV ONLY.
     """
 
-    _db.delete_collection()
+    db = get_db()
 
-    print(
-        "[vector_store] "
-        "Collection cleared."
-    )
+    db.delete_collection()
+
+    logger.warning("Vector collection cleared")

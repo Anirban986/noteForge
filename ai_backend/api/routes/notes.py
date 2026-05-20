@@ -12,7 +12,7 @@ exam-tuned content with exam_tip callout blocks.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-
+from fastapi import Depends
 from services import vector_store, generator
 #from services.generator import ExamContext
 
@@ -58,7 +58,7 @@ def free_notes(body: FreeNotesRequest):
 
 @router.post("/notes/exam")
 def exam_notes(body: ExamNotesRequest):
-
+    
     if vector_store.count() == 0:
         raise HTTPException(
             status_code=404,
@@ -79,7 +79,7 @@ def exam_notes(body: ExamNotesRequest):
         
     )
 
-    chunks = vector_store.retrieve(search_query, top_k=10)
+    chunks = vector_store.retrieve(search_query  , top_k=10)
 
     #  Pass values directly (NO ExamContext)
     return generator.exam_notes(
