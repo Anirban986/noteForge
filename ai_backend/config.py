@@ -85,6 +85,6 @@ POPPLER_PATH = (
 #frontend url
 FRONTEND_URL="http://noteforge-five.vercel.app"
 
-BACKEND_URL="https://noteforge-1-npjc.onrender.com"
+BACKEND_URL="http://noteforge-1-npjc.onrender.com"
 
 INTERNAL_API_KEY=os.getenv("AI_API_KEY")
