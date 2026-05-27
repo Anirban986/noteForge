@@ -13,7 +13,7 @@ console.log(__dirname);
 
 const allowedOrigins = [
   "http://localhost:5173", // Vite dev
-   process.env.CLIENT_URL  // future deployed frontend
+   //process.env.CLIENT_URL  // future deployed frontend
 ];
 
 
