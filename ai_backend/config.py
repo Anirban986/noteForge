@@ -8,6 +8,7 @@ Supports both:
 
 import os
 import json
+import platform
 from dotenv import load_dotenv
 
 # Load .env file locally
@@ -73,13 +74,12 @@ TOP_K = 4
 PDF_DPI = 250
 
 # ── Poppler ──────────────────────────────────────────────
-# Windows local development
-# Linux deployment uses system-installed poppler
-
+# Windows (local dev)  → hardcoded binary path
+# Linux   (any cloud)  → None, found via PATH after packages.txt install
 POPPLER_PATH = (
-    None
-    if os.getenv("RENDER")
-    else r"C:\Release-25.12.0-0\poppler-25.12.0\Library\bin"
+    r"C:\Release-25.12.0-0\poppler-25.12.0\Library\bin"
+    if platform.system() == "Windows"
+    else None
 )
 
 #frontend url
