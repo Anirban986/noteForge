@@ -21,7 +21,7 @@ const paymentRoutes = require("./routes/payment.routes");
 // ─────────────────────────────
 const allowedOrigins = [
   "http://localhost:5173",
-  /*process.env.CLIENT_URL*/
+  process.env.CLIENT_URL
 ].filter(Boolean);
 
 // ─────────────────────────────
