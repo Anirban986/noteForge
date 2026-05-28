@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import "./AuthModal.css";
+import  { setAuthSession } from "../api";
 
 /* ─────────────────────────────
    BRAND
@@ -150,42 +151,29 @@ function LoginScreen({ onSuccess, onSwitch, onForgot }) {
 
  const handleLogin = async () => {
   setError("");
-
   try {
     setLoading(true);
+    const { data } = await api.post("/api/auth/login", { email, password });
 
-    const res = await api.post("/api/auth/login", {
-      email,
-      password,
-    });
+    if (data.status === "MFA_REQUIRED") {
+      onSuccess({ type: "MFA_REQUIRED", userId: data.userId });
+      return;
+    }
 
-    console.log("FULL RESPONSE:", res);
-    console.log("DATA:", res.data);
-
-    const data = res.data;
-
-    if (!data) {
-      console.log("NO DATA RECEIVED");
+    if (data.status === "SETUP_MFA") {
+      onSuccess({ type: "SETUP_MFA", userId: data.userId });
       return;
     }
 
     if (data.status === "SUCCESS") {
-      console.log("SUCCESS BLOCK HIT");
-
-      localStorage.setItem("token", data.token);
-
-      alert("TOKEN: " + localStorage.getItem("token"));
-
+      setAuthSession({ token: data.token, user: data.user });
       onSuccess({ type: "SUCCESS", user: data.user });
-
       return;
     }
 
-    console.log("STATUS:", data.status);
-
+    setError("Unexpected response from server. Please try again.");
   } catch (err) {
-    console.log("LOGIN ERROR:", err);
-    setError(err.response?.data?.message || "Login failed");
+    setError(err.userMessage || err.response?.data?.message || "Login failed");
   } finally {
     setLoading(false);
   }
@@ -210,7 +198,7 @@ function LoginScreen({ onSuccess, onSwitch, onForgot }) {
         <button onClick={onSwitch}>Sign up</button>
       </p>
 
-      <button className="auth-link" onClick={onForgot}>
+      <button className="auth-field__forgot" onClick={onForgot}>
         Forgot password?
       </button>
     </>
@@ -222,21 +210,23 @@ function LoginScreen({ onSuccess, onSwitch, onForgot }) {
 ───────────────────────────────*/
 function MfaScreen({ userId, onSuccess }) {
   const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const verify = async () => {
+    setError("");
     try {
-      const clean = otp.replace(/\s/g, "");
-
+      setLoading(true);
       const { data } = await api.post("/api/auth/verify-mfa", {
         userId,
-        otp: clean,
+        otp: otp.replace(/\s/g, ""),
       });
-
-      localStorage.setItem("token", data.token);
+      setAuthSession({ token: data.token, user: data.user });
       onSuccess({ type: "SUCCESS", user: data.user });
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
+      setError(err.userMessage || err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -244,13 +234,10 @@ function MfaScreen({ userId, onSuccess }) {
     <>
       <Brand />
       <h2>MFA Verification</h2>
-
       <Field label="OTP Code" value={otp} onChange={setOtp} />
-
       {error && <p className="auth-modal__message">{error}</p>}
-
-      <button className="auth-modal__submit" onClick={verify}>
-        Verify
+      <button className="auth-modal__submit" onClick={verify} disabled={loading}>
+        {loading ? "Verifying…" : "Verify"}
       </button>
     </>
   );
@@ -262,32 +249,34 @@ function MfaScreen({ userId, onSuccess }) {
 function SetupMfaScreen({ userId, onSuccess }) {
   const [qr, setQr] = useState(null);
   const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
       try {
         const { data } = await api.post("/api/auth/setup-mfa", { userId });
-        setQr(data.qr);
+        if (!cancelled) setQr(data.qr);
       } catch {
-        setError("Failed to load MFA setup");
+        if (!cancelled) setError("Failed to load MFA setup");
       }
     };
-
     load();
+    return () => { cancelled = true; };
   }, [userId]);
 
   const verify = async () => {
+    setError("");
     try {
-      const { data } = await api.post("/api/auth/verify-mfa", {
-        userId,
-        otp,
-      });
-
-      localStorage.setItem("token", data.token);
+      setLoading(true);
+      const { data } = await api.post("/api/auth/verify-mfa", { userId, otp });
+      setAuthSession({ token: data.token, user: data.user });
       onSuccess({ type: "SUCCESS", user: data.user });
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
+      setError(err.userMessage || err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -295,19 +284,17 @@ function SetupMfaScreen({ userId, onSuccess }) {
     <>
       <Brand />
       <h2>Setup MFA</h2>
-
-      {qr && <img src={qr} alt="QR Code" />}
-
+      <p>Scan the QR code with your authenticator app, then enter the code below.</p>
+      {qr ? <img src={qr} alt="MFA QR Code" /> : !error && <p>Loading QR code…</p>}
       <Field label="OTP" value={otp} onChange={setOtp} />
-
       {error && <p className="auth-modal__message">{error}</p>}
-
-      <button className="auth-modal__submit" onClick={verify}>
-        Complete Setup
+      <button className="auth-modal__submit" onClick={verify} disabled={loading || !qr}>
+        {loading ? "Verifying…" : "Complete Setup"}
       </button>
     </>
   );
 }
+
 
 /* ─────────────────────────────
    ROOT MODAL
