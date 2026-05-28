@@ -25,7 +25,7 @@ router.post("/reset-password", userController.resetPassword);
  // MFA routes - Public during setup, then protected
 router.post("/verify-mfa",userController.verifyMfaController);
 router.post("/setup-mfa",userController.setupMfaController);
-router.post("/reset-mfa", userController.resetMfaController);
+//router.post("/reset-mfa", userController.resetMfaController);
 
 //🔥🔥To protect dashboard data
 router.get("/admin/dashboard",

@@ -1,44 +1,42 @@
-const user = require("../models/user.model");
+const User = require("../models/user.model");
 
-async function findbyEmailandUsername(username,email){
-    return await user.findOne({
-        $or:[
-            {username},
-            {email}
-        ]
-})
+async function findByEmail(email) {
+  return User.findOne({ email });
 }
 
-async function createUser(userData){
-    return await user.create(userData);
+async function findByUsername(username) {
+  return User.findOne({ username });
 }
 
-async function findUserById(id){
-    console.log("🔍 Repository: Finding user by ID:", id);
-    try {
-        const User = await user.findById(id);
-        console.log("✅ Repository: User found:", !!User);
-        return User;
-    } catch (error) {
-        console.error("❌ Repository error:", error);
-        throw error;
-    }
-}
-
-async function findByVerificationToken(token) {
-  return await user.findOne({
-    verificationToken: token,
+/**
+ * Accepts two separate args (username, email) so callers don't have to
+ * guess which field to pass as the single "emailOrUsername" string.
+ */
+async function findByEmailOrUsername(username, email) {
+  return User.findOne({
+    $or: [{ email }, { username }],
   });
 }
 
-async function updateUser(user) {
-  return await user.save();
+/** Canonical ID lookup used everywhere in services. */
+async function findUserById(id) {
+  return User.findById(id);
 }
 
-module.exports={
-    findbyEmailandUsername,
-    createUser,
-    findUserById,
-    findByVerificationToken,
-    updateUser
+async function createUser(data) {
+  return User.create(data);
 }
+
+/** Canonical update used everywhere in services. */
+async function updateUser(id, update) {
+  return User.findByIdAndUpdate(id, update, { new: true });
+}
+
+module.exports = {
+  findByEmail,
+  findByUsername,
+  findByEmailOrUsername,
+  findUserById,
+  createUser,
+  updateUser,
+};

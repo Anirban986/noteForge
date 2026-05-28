@@ -1,19 +1,50 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
+
+/**
+ * Extract token from:
+ * 1. Authorization header
+ * 2. Cookie (token)
+ */
+function extractToken(req) {
+  const headerToken =
+    req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
+      : null;
+
+  const cookieToken = req.cookies?.token;
+
+  return headerToken || cookieToken || null;
+}
+
+/**
+ * AUTH MIDDLEWARE
+ */
 async function userMiddleware(req, res, next) {
   try {
-    const token = req.cookies.token;
+    const token = extractToken(req);
 
     if (!token) {
       return res.status(401).json({
-        message: "Not authorized - No token provided",
+        message: "Not authorized - token missing",
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
 
-    //  Fetch user from DB
-    const user = await User.findById(decoded.id);
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Token expired" });
+      }
+
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const user = await User.findById(decoded.id).select(
+      "_id role isVerified email",
+    );
 
     if (!user) {
       return res.status(401).json({
@@ -21,64 +52,52 @@ async function userMiddleware(req, res, next) {
       });
     }
 
-    //  Check verification
     if (!user.isVerified) {
       return res.status(403).json({
         message: "Email not verified",
       });
     }
 
-    //  Attach full user (better than decoded only)
+    // Attach minimal safe context
     req.user = {
       id: user._id,
       role: user.role,
+      email: user.email,
     };
 
     next();
-
   } catch (error) {
-    if (error.name === "JsonWebTokenError") {
-      return res.status(401).json({
-        message: "Invalid token",
-      });
-    }
-
-    if (error.name === "TokenExpiredError") {
-      return res.status(401).json({
-        message: "Token expired",
-      });
-    }
-
     console.error("Auth middleware error:", error);
 
-    res.status(401).json({
+    res.status(500).json({
       message: "Authentication failed",
     });
   }
 }
-// 🔥🔥🔥 For Admin only 🔥🔥🔥
 
-async function adminMiddleware(req, res, next) {
+/**
+ * ADMIN MIDDLEWARE
+ */
+function adminMiddleware(req, res, next) {
   try {
-    // Check if req.user exists (should be set by userMiddleware)
     if (!req.user) {
       return res.status(401).json({
-        message: "Not authorized - User context missing",
+        message: "User context missing",
       });
     }
 
-    // Check if user has admin role
     if (req.user.role !== "admin") {
       return res.status(403).json({
-        message: "Access denied - Admin privileges required",
+        message: "Admin access required",
       });
     }
 
     next();
   } catch (error) {
     console.error("Admin middleware error:", error);
+
     res.status(500).json({
-      message: "Server error in admin authorization",
+      message: "Authorization error",
     });
   }
 }
