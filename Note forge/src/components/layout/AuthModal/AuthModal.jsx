@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react"; // ← Fixed import
+import { useState, useEffect } from "react";
 import api from "../api";
 import "./AuthModal.css";
 
 /* ─────────────────────────────
-   Shared brand header
+   BRAND
 ───────────────────────────────*/
 function Brand() {
   return (
@@ -17,912 +17,364 @@ function Brand() {
 }
 
 /* ─────────────────────────────
-   Field component
+   FIELD
 ───────────────────────────────*/
-function Field({
-  label,
-  type = "text",
-  value,
-  onChange,
-  error,
-  placeholder,
-  children,
-}) {
+function Field({ label, value, onChange, type = "text", error, placeholder }) {
   return (
     <div className="auth-field">
-      {children ? (
-        <div className="auth-field__row">
-          <label className="auth-field__label">{label}</label>
-          {children}
-        </div>
-      ) : (
-        <label className="auth-field__label">{label}</label>
-      )}
+      <label className="auth-field__label">{label}</label>
+
       <input
-        type={type}
         className={`auth-field__input ${error ? "auth-field__input--error" : ""}`}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        type={type}
         placeholder={placeholder}
-        autoComplete={
-          type === "password"
-            ? "current-password"
-            : type === "email"
-              ? "email"
-              : "off"
-        }
+        onChange={(e) => onChange(e.target.value)}
       />
+
       {error && <div className="auth-field__error">⚠ {error}</div>}
     </div>
   );
 }
-//--------sign up screen------
-function SignUpScreen({ onSwitch, onVerify }) {
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const [errors, setErrors] = useState({});
+/* ─────────────────────────────
+   SIGNUP
+───────────────────────────────*/
+function SignUpScreen({ onNext, onSwitch }) {
+  const [form, setForm] = useState({
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+  });
+
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const validate = () => {
-    const e = {};
-    if (!name.trim()) e.name = "Name required";
-    if (!username.trim()) e.username = "Username required";
-    if (!email.includes("@")) e.email = "Invalid email";
-    if (password.length < 8) e.password = "Min 8 characters";
-    return e;
-  };
+  const update = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length) {
-      setErrors(e);
-      return;
-    }
+    setError("");
 
-    setLoading(true);
-    setMessage("");
+    if (!form.email.includes("@")) return setError("Invalid email");
+    if (form.password.length < 8) return setError("Min 8 characters");
 
     try {
-      await api.post("/api/auth/register", {
-        name,
-        username,
-        email,
-        password,
-      });
+      setLoading(true);
 
-      // 👉 Move to OTP screen
-      onVerify(email);
+      await api.post("/api/auth/register", form);
+
+      onNext(form.email);
     } catch (err) {
+      setError(err.response?.data?.message || "Signup failed");
+    } finally {
       setLoading(false);
-      setMessage(err.response?.data?.message || "Signup failed");
     }
   };
 
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Create account</h2>
+      <h2>Create account</h2>
 
-      <Field label="Name" value={name} onChange={setName} error={errors.name} />
-      <Field
-        label="Username"
-        value={username}
-        onChange={setUsername}
-        error={errors.username}
-      />
-      <Field
-        label="Email"
-        value={email}
-        onChange={setEmail}
-        error={errors.email}
-      />
+      <Field label="Name" value={form.name} onChange={(v) => update("name", v)} />
+      <Field label="Username" value={form.username} onChange={(v) => update("username", v)} />
+      <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
       <Field
         label="Password"
         type="password"
-        value={password}
-        onChange={setPassword}
-        error={errors.password}
+        value={form.password}
+        onChange={(v) => update("password", v)}
       />
 
-      {message && <p className="auth-modal__message">{message}</p>}
+      {error && <p className="auth-modal__message">{error}</p>}
 
-      <button
-        className="auth-modal__submit"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? "Creating..." : "Create Account →"}
+      <button className="auth-modal__submit" onClick={handleSubmit} disabled={loading}>
+        {loading ? "Creating..." : "Create Account"}
       </button>
 
-      <div className="auth-modal__switch">
+      <p className="auth-modal__switch">
         Already have an account?
         <button onClick={onSwitch}>Login</button>
-      </div>
+      </p>
     </>
   );
 }
 
-//--------verification screen---------
-
-function VerifyCodeScreen({ email, onSuccess, onBack }) {
+/* ─────────────────────────────
+   VERIFY EMAIL
+───────────────────────────────*/
+function VerifyScreen({ email, onDone, onBack }) {
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleVerify = async () => {
-    if (!code) {
-      setMessage("Enter code");
-      return;
-    }
-
-    setLoading(true);
-
     try {
       await api.post("/api/auth/verify-code", { email, code });
-
-      setMessage("Email verified!");
-
-      setTimeout(() => onSuccess(), 800);
+      onDone();
     } catch (err) {
-      setLoading(false);
-      setMessage(err.response?.data?.message || "Invalid code");
-    }
-  };
-
-  const handleResend = async () => {
-    try {
-      await api.post("/api/auth/resend-code", { email });
-      setMessage("Code sent again");
-    } catch {
-      setMessage("Failed to resend");
+      setError(err.response?.data?.message || "Invalid code");
     }
   };
 
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Verify Email</h2>
-      <p className="auth-modal__subtitle">
-        Code sent to <b>{email}</b>
-      </p>
+      <h2>Verify Email</h2>
+      <p>Sent to {email}</p>
 
-      <Field
-        label="Verification Code"
-        value={code}
-        onChange={setCode}
-        placeholder="123456"
-      />
+      <Field label="Code" value={code} onChange={setCode} />
 
-      {message && <p className="auth-modal__message">{message}</p>}
+      {error && <p className="auth-modal__message">{error}</p>}
 
-      <button
-        className="auth-modal__submit"
-        onClick={handleVerify}
-        disabled={loading}
-      >
-        {loading ? "Verifying..." : "Verify →"}
+      <button className="auth-modal__submit" onClick={handleVerify}>
+        Verify
       </button>
 
-      <button onClick={handleResend} className="auth-link">
-        Resend Code
-      </button>
-
-      <button onClick={onBack} className="auth-link">
-        ← Back
+      <button className="auth-link" onClick={onBack}>
+        Back
       </button>
     </>
   );
 }
 
 /* ─────────────────────────────
-   Log In screen
+   LOGIN
 ───────────────────────────────*/
-function LogInScreen({ onSwitch, onForgot, onSuccess }) {
+function LoginScreen({ onSuccess, onSwitch, onForgot }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [serverMessage, setServerMessage] = useState(null);
+  const [error, setError] = useState("");
 
-  const validate = () => {
-    const e = {};
-    if (!email.includes("@")) e.email = "Enter a valid email";
-    if (!password) e.password = "Password is required";
-    return e;
-  };
+ const handleLogin = async () => {
+  setError("");
 
-  const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length) {
-      setErrors(e);
+  try {
+    setLoading(true);
+
+    const res = await api.post("/api/auth/login", {
+      email,
+      password,
+    });
+
+    console.log("FULL RESPONSE:", res);
+    console.log("DATA:", res.data);
+
+    const data = res.data;
+
+    if (!data) {
+      console.log("NO DATA RECEIVED");
       return;
     }
 
-    setErrors({});
-    setLoading(true);
-    setServerMessage(null);
+    if (data.status === "SUCCESS") {
+      console.log("SUCCESS BLOCK HIT");
 
-    try {
-      const { data } = await api.post("/api/auth/login", {
-        email,
-        password,
-      });
+      localStorage.setItem("token", data.token);
 
-      // 🔥 Handle MFA required
-      if (data.mfaRequired) {
-        onSuccess({ mfaRequired: true, userId: data.userId });
-        return;
-      }
+      alert("TOKEN: " + localStorage.getItem("token"));
 
-      // 🔥 Handle MFA setup
-      if (data.setupMfa) {
-        onSuccess({ setupMfa: true, userId: data.userId });
-        return;
-      }
+      onSuccess({ type: "SUCCESS", user: data.user });
 
-      // ✅ Normal successful login
-      setServerMessage({ type: "success", text: data.message });
-
-      // ✅ Cookie is set automatically by backend
-      // No need to store token in localStorage
-
-      setTimeout(() => onSuccess(data.user), 500);
-    } catch (err) {
-      setLoading(false);
-
-      if (!err.response) {
-        setServerMessage({
-          type: "error",
-          text: "Network error. Please try again.",
-        });
-        return;
-      }
-
-      const { status, data } = err.response;
-
-      if (status === 401) {
-        setErrors({ password: data.message });
-        setServerMessage({ type: "error", text: data.message });
-      } else {
-        setServerMessage({
-          type: "error",
-          text: "Something went wrong. Please try again.",
-        });
-      }
+      return;
     }
-  };
+
+    console.log("STATUS:", data.status);
+
+  } catch (err) {
+    console.log("LOGIN ERROR:", err);
+    setError(err.response?.data?.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Welcome back</h2>
-      <p className="auth-modal__subtitle">
-        Log in to continue to your workspace.
-      </p>
+      <h2>Welcome back</h2>
 
-      <Field
-        label="Email"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        placeholder="alex@example.com"
-        error={errors.email}
-      />
+      <Field label="Email" value={email} onChange={setEmail} />
+      <Field label="Password" type="password" value={password} onChange={setPassword} />
 
-      <Field
-        label="Password"
-        type="password"
-        value={password}
-        onChange={setPassword}
-        placeholder="Your password"
-        error={errors.password}
-      >
-        <button className="auth-field__forgot" onClick={onForgot}>
-          Forgot password?
-        </button>
-      </Field>
+      {error && <p className="auth-modal__message">{error}</p>}
 
-      {serverMessage && (
-        <p
-          className={`auth-modal__message auth-modal__message--${serverMessage.type}`}
-        >
-          {serverMessage.text}
-        </p>
-      )}
-
-      <button
-        className="auth-modal__submit"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <div className="auth-modal__spinner" /> Logging in…
-          </>
-        ) : (
-          "Log In →"
-        )}
+      <button className="auth-modal__submit" onClick={handleLogin} disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
       </button>
 
-      <div className="auth-modal__switch">
-        Don't have an account?
-        <button onClick={onSwitch}>Sign up free</button>
-      </div>
+      <p className="auth-modal__switch">
+        No account?
+        <button onClick={onSwitch}>Sign up</button>
+      </p>
+
+      <button className="auth-link" onClick={onForgot}>
+        Forgot password?
+      </button>
     </>
   );
 }
 
 /* ─────────────────────────────
-   Forgot Password screen
-───────────────────────────────*/
-function ForgotScreen({ onBack }) {
-  const [step, setStep] = useState(1); // 1=email, 2=otp, 3=success
-
-  const [email, setEmail] = useState("");
-  const [otp, setOTP] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // STEP 1 → SEND OTP
-  const handleSendOTP = async () => {
-    if (!email.includes("@")) {
-      return setError("Enter a valid email");
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      await api.post("/api/auth/forgot-password", { email });
-
-      setStep(2);
-    } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // STEP 2 → RESET PASSWORD
-  const handleResetPassword = async () => {
-    if (!otp || password.length < 6) {
-      return setError("Enter valid OTP and password (min 6 chars)");
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      await api.post("/api/auth/reset-password", {
-        email,
-        otp,
-        newPassword: password,
-      });
-
-      setStep(3);
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // STEP 3 → SUCCESS
-  if (step === 3) {
-    return (
-      <div className="auth-modal__success">
-        <div className="auth-modal__success-icon">✅</div>
-        <div className="auth-modal__success-title">
-          Password Reset Successful
-        </div>
-        <p className="auth-modal__success-desc">
-          You can now log in with your new password.
-        </p>
-        <button className="auth-modal__submit" onClick={onBack}>
-          ← Back to Log In
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Brand />
-
-      {step === 1 && (
-        <>
-          <h2 className="auth-modal__title">Forgot password?</h2>
-          <p className="auth-modal__subtitle">
-            Enter your email to receive a verification code.
-          </p>
-
-          <Field
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(v) => {
-              setEmail(v);
-              setError("");
-            }}
-            placeholder="alex@example.com"
-            error={error}
-          />
-
-          <button
-            className="auth-modal__submit"
-            onClick={handleSendOTP}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <div className="auth-modal__spinner" /> Sending…
-              </>
-            ) : (
-              "Send OTP →"
-            )}
-          </button>
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <h2 className="auth-modal__title">Verify OTP</h2>
-          <p className="auth-modal__subtitle">
-            Enter the OTP sent to <b>{email}</b>
-          </p>
-
-          <Field
-            label="OTP"
-            type="text"
-            value={otp}
-            onChange={(v) => {
-              setOTP(v);
-              setError("");
-            }}
-            placeholder="Enter 6-digit OTP"
-            error={error}
-          />
-
-          <Field
-            label="New Password"
-            type="password"
-            value={password}
-            onChange={(v) => {
-              setPassword(v);
-              setError("");
-            }}
-            placeholder="Enter new password"
-          />
-
-          <button
-            className="auth-modal__submit"
-            onClick={handleResetPassword}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <div className="auth-modal__spinner" /> Resetting…
-              </>
-            ) : (
-              "Reset Password →"
-            )}
-          </button>
-
-          <div className="auth-modal__switch">
-            Didn’t receive OTP?
-            <button onClick={handleSendOTP}>Resend</button>
-          </div>
-        </>
-      )}
-
-      <div className="auth-modal__switch">
-        Remember your password?
-        <button onClick={onBack}>Log in</button>
-      </div>
-    </>
-  );
-}
-
-/* ─────────────────────────────
-   MFA Verification screen
+   MFA VERIFY
 ───────────────────────────────*/
 function MfaScreen({ userId, onSuccess }) {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleVerify = async () => {
-    // Clean the input
-    const cleanOtp = otp.trim().replace(/\s+/g, "").replace(/-/g, "");
-
-    if (cleanOtp.length !== 6) {
-      setError("Enter 6-digit code");
-      return;
-    }
-
-    if (!/^\d{6}$/.test(cleanOtp)) {
-      setError("Code must be 6 digits");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
+  const verify = async () => {
     try {
-      console.log("🔐 Verifying MFA...");
-      console.log("📤 Sending userId:", userId);
-      console.log("📤 Sending OTP:", cleanOtp);
+      const clean = otp.replace(/\s/g, "");
 
       const { data } = await api.post("/api/auth/verify-mfa", {
         userId,
-        otp: cleanOtp,
+        otp: clean,
       });
 
-      console.log("✅ MFA verification successful:", data);
-
-      // ✅ Cookie is set automatically by backend
-      onSuccess(data.user);
+      localStorage.setItem("token", data.token);
+      onSuccess({ type: "SUCCESS", user: data.user });
     } catch (err) {
-      setLoading(false);
-
-      console.error("❌ MFA verification failed:", err);
-      console.error("❌ Error response:", err.response?.data);
-
-      if (err.response?.status === 401) {
-        setError("Invalid OTP code. Please check your authenticator app.");
-      } else if (err.response?.status === 400) {
-        setError(err.response?.data?.message || "Bad request");
-      } else if (err.response?.status === 404) {
-        setError("User not found. Please try logging in again.");
-      } else {
-        setError("Verification failed. Please try again.");
-      }
-    }
-  };
-
-  // Allow Enter key to submit
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && otp.length === 6) {
-      handleVerify();
+      setError(err.response?.data?.message || "Invalid OTP");
     }
   };
 
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Verify Admin Access</h2>
-      <p className="auth-modal__subtitle">
-        Enter the 6-digit code from your authenticator app
-      </p>
+      <h2>MFA Verification</h2>
 
-      <Field
-        label="Authentication Code"
-        value={otp}
-        onChange={(val) => {
-          setOtp(val);
-          setError(""); // Clear error when user types
-        }}
-        placeholder="123456"
-        error={error}
-      />
+      <Field label="OTP Code" value={otp} onChange={setOtp} />
 
-      <p
-        style={{
-          fontSize: "12px",
-          color: "#666",
-          marginTop: "-8px",
-          marginBottom: "16px",
-        }}
-      >
-        The code refreshes every 30 seconds
-      </p>
+      {error && <p className="auth-modal__message">{error}</p>}
 
-      <button
-        className="auth-modal__submit"
-        onClick={handleVerify}
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <div className="auth-modal__spinner" /> Verifying…
-          </>
-        ) : (
-          "Verify →"
-        )}
+      <button className="auth-modal__submit" onClick={verify}>
+        Verify
       </button>
     </>
   );
 }
 
 /* ─────────────────────────────
-   MFA Setup screen
+   MFA SETUP
 ───────────────────────────────*/
 function SetupMfaScreen({ userId, onSuccess }) {
-  const [qrCode, setQrCode] = useState(null);
-  const [manualSecret, setManualSecret] = useState(null);
-  const [showManual, setShowManual] = useState(false);
+  const [qr, setQr] = useState(null);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState("loading");
 
   useEffect(() => {
-    async function fetchQR() {
+    const load = async () => {
       try {
-        console.log("🔧 Fetching QR code for userId:", userId);
         const { data } = await api.post("/api/auth/setup-mfa", { userId });
-        console.log("✅ QR code received");
-        setQrCode(data.qr);
-        setManualSecret(data.manualEntry || data.secret);
-        setStep("scan");
-      } catch (err) {
-        console.error("❌ MFA setup error:", err);
-        setError("Failed to setup MFA. Please try again.");
-        setStep("error");
+        setQr(data.qr);
+      } catch {
+        setError("Failed to load MFA setup");
       }
-    }
-    if (!qrCode) {
-      fetchQR();
-    }
+    };
+
+    load();
   }, [userId]);
 
-  const handleVerify = async () => {
-    const cleanOtp = otp.trim().replace(/\s+/g, "").replace(/-/g, "");
-
-    if (cleanOtp.length !== 6) {
-      setError("Enter 6-digit code");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
+  const verify = async () => {
     try {
-      console.log("🔐 Verifying setup with OTP...");
       const { data } = await api.post("/api/auth/verify-mfa", {
         userId,
-        otp: cleanOtp,
+        otp,
       });
 
-      console.log("✅ Setup verification successful");
-      onSuccess(data.user);
+      localStorage.setItem("token", data.token);
+      onSuccess({ type: "SUCCESS", user: data.user });
     } catch (err) {
-      setLoading(false);
-      console.error("❌ Setup verification failed:", err);
-
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError(
-          "Invalid code. Make sure you're entering the current code from your app.",
-        );
-      }
+      setError(err.response?.data?.message || "Invalid OTP");
     }
   };
-
-  if (step === "loading") {
-    return (
-      <>
-        <Brand />
-        <h2 className="auth-modal__title">Setting up MFA...</h2>
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <div className="auth-modal__spinner" />
-        </div>
-      </>
-    );
-  }
-
-  if (step === "error") {
-    return (
-      <>
-        <Brand />
-        <h2 className="auth-modal__title">Setup Failed</h2>
-        <p className="auth-modal__subtitle" style={{ color: "#d32f2f" }}>
-          {error}
-        </p>
-        <button
-          className="auth-modal__submit"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </button>
-      </>
-    );
-  }
 
   return (
     <>
       <Brand />
-      <h2 className="auth-modal__title">Setup Two-Factor Authentication</h2>
+      <h2>Setup MFA</h2>
 
-      {!showManual ? (
-        <>
-          <p className="auth-modal__subtitle">
-            Scan this QR code with your authenticator app
-          </p>
+      {qr && <img src={qr} alt="QR Code" />}
 
-          {qrCode && (
-            <div
-              style={{
-                textAlign: "center",
-                margin: "20px 0",
-                padding: "20px",
-                backgroundColor: "#f5f5f5",
-                borderRadius: "8px",
-              }}
-            >
-              <img
-                src={qrCode}
-                alt="MFA QR Code"
-                style={{ maxWidth: "200px", border: "4px solid white" }}
-              />
-            </div>
-          )}
+      <Field label="OTP" value={otp} onChange={setOtp} />
 
-          <button
-            onClick={() => setShowManual(true)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#4F46E5",
-              cursor: "pointer",
-              textDecoration: "underline",
-              marginBottom: "16px",
-            }}
-          >
-            Can't scan? Enter code manually
-          </button>
-        </>
-      ) : (
-        <>
-          <p className="auth-modal__subtitle">
-            Enter this code manually in your authenticator app
-          </p>
+      {error && <p className="auth-modal__message">{error}</p>}
 
-          <div
-            style={{
-              padding: "16px",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "8px",
-              marginBottom: "16px",
-              fontFamily: "monospace",
-              fontSize: "14px",
-              wordBreak: "break-all",
-            }}
-          >
-            {manualSecret}
-          </div>
-
-          <button
-            onClick={() => setShowManual(false)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#4F46E5",
-              cursor: "pointer",
-              textDecoration: "underline",
-              marginBottom: "16px",
-            }}
-          >
-            ← Back to QR code
-          </button>
-        </>
-      )}
-
-      <p style={{ fontSize: "13px", color: "#666", marginBottom: "16px" }}>
-        After setup, enter the 6-digit code from your app
-      </p>
-
-      <Field
-        label="Verification Code"
-        value={otp}
-        onChange={(val) => {
-          setOtp(val);
-          setError("");
-        }}
-        placeholder="123456"
-        error={error}
-      />
-
-      <button
-        className="auth-modal__submit"
-        onClick={handleVerify}
-        disabled={loading || !qrCode}
-      >
-        {loading ? (
-          <>
-            <div className="auth-modal__spinner" /> Verifying…
-          </>
-        ) : (
-          "Verify & Complete Setup →"
-        )}
+      <button className="auth-modal__submit" onClick={verify}>
+        Complete Setup
       </button>
     </>
   );
 }
-/* ─────────────────────────────
-   Root AuthModal
-───────────────────────────────*/
-export default function AuthModal({
-  initialMode = "signup",
-  onClose,
-  onAuthSuccess,
-}) {
-  const [mode, setMode] = useState(initialMode);
-  const [mfaUserId, setMfaUserId] = useState(null);
-  const [verifyEmail, setVerifyEmail] = useState("");
 
-  const handleSuccess = (data) => {
-    // 🔥 Handle MFA required
-    if (data?.mfaRequired) {
-      setMfaUserId(data.userId);
+/* ─────────────────────────────
+   ROOT MODAL
+───────────────────────────────*/
+export default function AuthModal({ onClose, onAuthSuccess }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [mfaUserId, setMfaUserId] = useState(null);
+
+  const handleAuth = (res) => {
+    if (res.type === "MFA_REQUIRED") {
+      setMfaUserId(res.userId);
       setMode("mfa");
       return;
     }
 
-    // 🔥 Handle MFA setup
-    if (data?.setupMfa) {
-      setMfaUserId(data.userId);
-      setMode("setupMfa");
+    if (res.type === "SETUP_MFA") {
+      setMfaUserId(res.userId);
+      setMode("setup");
       return;
     }
 
-    // ✅ Normal success
-    onAuthSuccess(data);
-    onClose();
+    if (res.type === "SUCCESS") {
+      onAuthSuccess(res.user);
+      onClose();
+    }
   };
 
   return (
-    <div
-      className="auth-overlay"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <div className="auth-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="auth-modal">
-        <button className="auth-modal__close" onClick={onClose}>
+        <button onClick={onClose} className="auth-modal__close">
           ✕
         </button>
 
-        {/* SIGNUP */}
         {mode === "signup" && (
           <SignUpScreen
             onSwitch={() => setMode("login")}
-            onVerify={(email) => {
-              setVerifyEmail(email);
+            onNext={(email) => {
+              setEmail(email);
               setMode("verify");
             }}
           />
         )}
-        {/* VERIFY EMAIL (OTP) */}
+
         {mode === "verify" && (
-          <VerifyCodeScreen
-            email={verifyEmail}
-            onSuccess={() => setMode("login")}
+          <VerifyScreen
+            email={email}
+            onDone={() => setMode("login")}
             onBack={() => setMode("signup")}
           />
         )}
 
         {mode === "login" && (
-          <LogInScreen
+          <LoginScreen
             onSwitch={() => setMode("signup")}
             onForgot={() => setMode("forgot")}
-            onSuccess={handleSuccess}
+            onSuccess={handleAuth}
           />
         )}
 
-        {mode === "forgot" && <ForgotScreen onBack={() => setMode("login")} />}
-
         {mode === "mfa" && (
-          <MfaScreen userId={mfaUserId} onSuccess={handleSuccess} />
+          <MfaScreen userId={mfaUserId} onSuccess={handleAuth} />
         )}
 
-        {mode === "setupMfa" && (
-          <SetupMfaScreen userId={mfaUserId} onSuccess={handleSuccess} />
+        {mode === "setup" && (
+          <SetupMfaScreen userId={mfaUserId} onSuccess={handleAuth} />
         )}
       </div>
     </div>
