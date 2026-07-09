@@ -31,9 +31,12 @@ export default function ExamUpload({ exam }) {
       if (firstSubject) {
         setSubject(firstSubject);
 
-        const firstChapters = subjects[firstSubject].chapters || [];
-        setChapters(firstChapters);
-        setSelectedChapter(firstChapters[0] || "");
+       const firstChapters = Object.keys(
+  subjects[firstSubject].chapters || {}
+);
+
+setChapters(firstChapters);
+setSelectedChapter(firstChapters[0] || "");
       }
     }
   }, [examData]);
@@ -42,9 +45,12 @@ export default function ExamUpload({ exam }) {
   //  When subject changes
   useEffect(() => {
     if (subject && subjects[subject]) {
-      const newChapters = subjects[subject].chapters || [];
-      setChapters(newChapters);
-      setSelectedChapter(newChapters[0] || "");
+     const newChapters = Object.keys(
+  subjects[subject].chapters || {}
+);
+
+setChapters(newChapters);
+setSelectedChapter(newChapters[0] || "");
     }
   }, [subject, subjects]);
 

@@ -1,0 +1,282 @@
+/* ChapterStatsPanel.css */
+
+.csp-root {
+  border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1));
+  border-radius: 12px;
+  background: var(--color-background-primary, #fff);
+  padding: 1.1rem 1.25rem;
+  margin: 1.5rem 0;
+}
+
+.csp-root--error {
+  color: var(--color-text-danger, #A32D2D);
+  font-size: 13px;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Header */
+.csp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.csp-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.csp-header__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary, #888);
+  font-weight: 500;
+}
+.csp-header__chapter {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  line-height: 1.3;
+}
+.csp-header__subject {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+}
+.csp-header__exam {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: #E6F1FB;
+  color: #0C447C;
+  font-weight: 500;
+}
+
+/* Metrics */
+.csp-metrics {
+  display: flex;
+  gap: 0;
+  border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.08));
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.csp-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  gap: 3px;
+  border-right: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.08));
+}
+.csp-metric:last-child { border-right: none; }
+.csp-metric__val {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  line-height: 1.2;
+}
+.csp-metric__lbl {
+  font-size: 10px;
+  color: var(--color-text-secondary, #888);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Chart sections */
+.csp-section { margin-bottom: 14px; }
+.csp-section__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.csp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Legend */
+.csp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.csp-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--color-text-secondary, #666);
+}
+.csp-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Header right side — exam badge + prediction badge */
+.csp-header__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.csp-header__pred-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #FAEEDA;
+  color: #854F0B;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Prediction card */
+.csp-pred {
+  background: var(--color-background-secondary, #f8f8f7);
+  border-radius: 8px;
+  border: 0.5px solid #E8D5B5;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.csp-pred--empty {
+  font-size: 12px;
+  color: var(--color-text-secondary, #888);
+  text-align: center;
+  padding: 14px;
+  border: none;
+  background: none;
+}
+.csp-pred__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.csp-pred__year {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #854F0B;
+  font-weight: 600;
+}
+.csp-pred__row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+}
+.csp-pred__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.csp-pred__num {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text-primary, #111);
+  line-height: 1.2;
+}
+.csp-pred__lbl {
+  font-size: 10px;
+  color: var(--color-text-secondary, #888);
+}
+.csp-pred__model {
+  font-size: 10px;
+  color: var(--color-text-secondary, #999);
+}
+
+/* Confidence bar */
+.csp-conf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.csp-conf__track {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border-tertiary, rgba(0,0,0,0.1));
+  border-radius: 2px;
+  overflow: hidden;
+}
+.csp-conf__fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.csp-conf__label {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Skeleton loader */
+.csp-skeleton { padding: 4px 0; }
+.csp-skeleton__bar {
+  background: var(--color-background-secondary, #f0f0ee);
+  border-radius: 4px;
+  animation: csp-pulse 1.4s ease-in-out infinite;
+}
+@keyframes csp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* Empty */
+.csp-empty {
+  font-size: 13px;
+  color: var(--color-text-secondary, #888);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .csp-header__exam {
+    background: #0C447C;
+    color: #B5D4F4;
+  }
+  .csp-header__pred-badge {
+    background: #412402;
+    color: #FAC775;
+  }
+  .csp-skeleton__bar {
+    background: rgba(255,255,255,0.07);
+  }
+  .csp-pred {
+    border-color: #5C3D0A;
+    background: rgba(133,79,11,0.08);
+  }
+  .csp-pred__year {
+    color: #FAC775;
+  }
+  .csp-legend__item {
+    color: var(--color-text-secondary, #999);
+  }
+}
+
+/* Responsive — on narrow screens collapse metrics to 3 columns */
+@media (max-width: 480px) {
+  .csp-metrics {
+    flex-wrap: wrap;
+  }
+  .csp-metric {
+    flex: 0 0 33.33%;
+    border-right: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.08));
+    border-bottom: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.08));
+  }
+}

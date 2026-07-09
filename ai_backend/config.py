@@ -88,3 +88,6 @@ FRONTEND_URL="http://noteforge-five.vercel.app"
 BACKEND_URL="http://noteforge-1-npjc.onrender.com"
 
 INTERNAL_API_KEY=os.getenv("AI_API_KEY")
+DATABASE_URL=os.getenv("DATABASE_URL")
+
+GROQ_API_KEY=os.getenv("GROQ_API_KEY")

@@ -9,13 +9,20 @@ Fixes applied:
   2. All optional/missing fields have defaults so partial LLM output doesn't crash.
   3. Type normaliser maps class names → literal values before validation.
   4. Raw JSON parsing instead of with_structured_output() for full control.
+  5. Table row normaliser: converts dict-style rows (LLM sometimes emits
+     {header: value} instead of a positional list) into plain lists that
+     match the declared header order. This now runs INSIDE _normalise_blocks,
+     after the block "type" has been mapped to its canonical value (e.g.
+     "TableBlock" -> "table"), so it can no longer be skipped when the LLM
+     returns a class-name style type. It also checks every row, not just
+     the first, in case of mixed dict/list rows in the same table.
 """
 
-from typing import Optional, Union, Literal, Annotated,List
+from typing import Optional, Union, Literal, Annotated, List
 from pydantic import BaseModel, Field
 import json
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -37,6 +44,7 @@ _TYPE_NAME_MAP = {
     "CalloutBlock":   "callout",
 }
 
+
 def _normalize_mindmap_tree(node):
     # string → convert to node
     if isinstance(node, str):
@@ -55,6 +63,33 @@ def _normalize_mindmap_tree(node):
     # fallback
     return {"label": str(node), "children": []}
 
+
+def _normalise_table_rows(block: dict) -> None:
+    """
+    Convert dict-style rows (LLM sometimes emits {header: value} pairs
+    instead of a positional list) into plain lists matching the declared
+    header order.
+
+    Checks EVERY row (not just the first) since the LLM can be inconsistent
+    within a single table — some rows correctly formatted as lists, others
+    as dicts.
+    """
+    headers = block.get("headers", [])
+    rows = block.get("rows", [])
+
+    normalised_rows = []
+    for row in rows:
+        if isinstance(row, dict):
+            normalised_rows.append([str(row.get(h, "")) for h in headers])
+        elif isinstance(row, list):
+            normalised_rows.append([str(cell) for cell in row])
+        else:
+            # Unexpected scalar row — wrap defensively rather than crash.
+            normalised_rows.append([str(row)])
+
+    block["rows"] = normalised_rows
+
+
 def _normalise_blocks(data: dict) -> dict:
     if "topics" not in data:
         return data
@@ -65,6 +100,9 @@ def _normalise_blocks(data: dict) -> dict:
 
                 if "type" in block:
                     block["type"] = _TYPE_NAME_MAP.get(block["type"], block["type"])
+
+                if block.get("type") == "table":
+                    _normalise_table_rows(block)
 
                 if block.get("type") == "mindmap":
                     branches = block.get("branches", [])
@@ -112,6 +150,7 @@ class FlowchartStep(BaseModel):
     label:       str = ""
     description: Optional[str] = None
 
+
 class FlowchartBlock(BaseModel):
     type:      Literal["flowchart"] = "flowchart"
     heading:   str = ""
@@ -126,17 +165,11 @@ class TableBlock(BaseModel):
     rows:    list[list[str]] = Field(default_factory=list)
 
 
-
-from typing import Union
-
 class MindmapNode(BaseModel):
     label: str = ""
     children: list["MindmapNode"] = Field(default_factory=list)
 
 MindmapNode.model_rebuild()
-
-
-
 
 
 class MindmapBlock(BaseModel):
@@ -158,8 +191,6 @@ class CalloutBlock(BaseModel):
     type:    Literal["callout"] = "callout"
     variant: Literal["tip", "warning", "important", "exam_tip"] = "important"
     text:    str = ""
-
-
 
 
 # Discriminated union — Pydantic uses the 'type' field directly
@@ -190,32 +221,26 @@ class TopperNotes(BaseModel):
 
     @classmethod
     def from_llm_output(cls, data: dict) -> "TopperNotes":
+        # _normalise_blocks handles BOTH type-name mapping and table-row
+        # normalisation, in that order, so table rows are always fixed
+        # after the type has been resolved to "table".
         data = _normalise_blocks(data)
-
-        # Normalize blocks inside topics
-        for topic in data.get("topics", []):
-            for block in topic.get("blocks", []):
-                if "type" in block:
-                    block["type"] = _TYPE_NAME_MAP.get(block["type"], block["type"])
-
         return cls(**data)
-
-
 
 
 # ─────────────────────────────────────────────────────────
 #  LLM INSTANCES
 # ─────────────────────────────────────────────────────────
 
-_llm = ChatGoogleGenerativeAI(
-    model=config.GEMINI_MODEL,
-    google_api_key=config.GEMINI_API_KEY,
+_llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    api_key=config.GROQ_API_KEY,
     temperature=0.2
 )
 
-_json_llm = ChatGoogleGenerativeAI(
-    model=config.GEMINI_MODEL,
-    google_api_key=config.GEMINI_API_KEY,
+_json_llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    api_key=config.GROQ_API_KEY,
     temperature=0.1
 )
 
@@ -275,23 +300,29 @@ RULES:
 - Each topic must have at least 1–3 blocks
 - Do NOT merge all content into one topic
 - Keep topic titles short and meaningful
-                                                 
+
+TABLE ROWS — CRITICAL FORMAT:
+- "rows" MUST be a list of lists (positional arrays), e.g. [["val1", "val2"], ["val3", "val4"]]
+- NEVER return rows as objects/dicts like {{"Col1": "val1", "Col2": "val2"}}
+- Each inner list's values must be in the SAME order as "headers"
 
 Return ONLY a JSON object, no markdown fences, no explanation:
 {{
   "title": "Main title of the note",                                                    
   "overview": "2-3 sentence summary of entire content",
   "topics": [
-    "title": "Topic Name",
-    "blocks": [
-      {{"type": "concept", "heading": "...", "explanation": "..."}},
-      {{"type": "keypoints", "heading": "...", "points": [{{"point": "...", "note": "..."}}]}},
-      {{"type": "flowchart", "heading": "...", "direction": "vertical", "steps": [{{"label": "...", "description": "..."}}]}},
-      {{"type": "table", "heading": "...", "headers": ["Col1", "Col2"], "rows": [["val1", "val2"]]}},
-      {{"type": "mindmap", "heading": "...", "root": "...", "branches": [{{"label": "...", "children": ["..."]}}]}},
-      {{"type": "formula", "heading": "...", "formula": "...", "meaning": "...", "example": "..."}},
-      {{"type": "callout", "variant": "tip|warning|important", "text": "..."}}
-    ]                                                                                                   
+    {{
+      "topic": "Topic Name",
+      "blocks": [
+        {{"type": "concept", "heading": "...", "explanation": "..."}},
+        {{"type": "keypoints", "heading": "...", "points": [{{"point": "...", "note": "..."}}]}},
+        {{"type": "flowchart", "heading": "...", "direction": "vertical", "steps": [{{"label": "...", "description": "..."}}]}},
+        {{"type": "table", "heading": "...", "headers": ["Col1", "Col2"], "rows": [["val1", "val2"]]}},
+        {{"type": "mindmap", "heading": "...", "root": "...", "branches": [{{"label": "...", "children": ["..."]}}]}},
+        {{"type": "formula", "heading": "...", "formula": "...", "meaning": "...", "example": "..."}},
+        {{"type": "callout", "variant": "tip|warning|important", "text": "..."}}
+      ]
+    }}
   ]
 }}
 
@@ -324,6 +355,11 @@ IMPORTANT — use EXACTLY these type string values (lowercase, no "Block" suffix
 
 Every keypoints block: each item MUST have BOTH "point" AND "note" fields.
 
+TABLE ROWS — CRITICAL FORMAT:
+- "rows" MUST be a list of lists (positional arrays), e.g. [["val1", "val2"], ["val3", "val4"]]
+- NEVER return rows as objects/dicts like {{"Col1": "val1", "Col2": "val2"}}
+- Each inner list's values must be in the SAME order as "headers"
+
 EXAM BEHAVIOUR:
 - Prioritise high-weightage topics for {exam}
 - Add callout blocks with variant "exam_tip" for frequently asked topics
@@ -335,19 +371,19 @@ Return ONLY a JSON object, no markdown fences:
   "title": "Main title",                                                    
   "overview": "2-3 sentence summary",
   "topics":[
-       {{
-    "title":"important topic",
-    "blocks": [
-    {{"type": "concept", "heading": "...", "explanation": "..."}},
-    {{"type": "keypoints", "heading": "...", "points": [{{"point": "...", "note": "..."}}]}},
-    {{"type": "flowchart", "heading": "...", "direction": "vertical", "steps": [{{"label": "...", "description": "..."}}]}},
-    {{"type": "table", "heading": "...", "headers": ["Col1", "Col2"], "rows": [["val1", "val2"]]}},
-    {{"type": "mindmap", "heading": "...", "root": "...", "branches": [{{"label": "...", "children": ["..."]}}]}},
-    {{"type": "formula", "heading": "...", "formula": "...", "meaning": "...", "example": "..."}},
-    {{"type": "callout", "variant": "exam_tip", "text": "..."}}
-  ]                                                                                      
-        }}                                               
-    ]
+    {{
+      "topic": "important topic",
+      "blocks": [
+        {{"type": "concept", "heading": "...", "explanation": "..."}},
+        {{"type": "keypoints", "heading": "...", "points": [{{"point": "...", "note": "..."}}]}},
+        {{"type": "flowchart", "heading": "...", "direction": "vertical", "steps": [{{"label": "...", "description": "..."}}]}},
+        {{"type": "table", "heading": "...", "headers": ["Col1", "Col2"], "rows": [["val1", "val2"]]}},
+        {{"type": "mindmap", "heading": "...", "root": "...", "branches": [{{"label": "...", "children": ["..."]}}]}},
+        {{"type": "formula", "heading": "...", "formula": "...", "meaning": "...", "example": "..."}},
+        {{"type": "callout", "variant": "exam_tip", "text": "..."}}
+      ]
+    }}
+  ]
 }}
 
 Content:
@@ -379,7 +415,10 @@ def _format_docs(docs) -> str:
 def _parse_topper_notes(raw: str) -> TopperNotes:
     """
     Parse raw LLM output into TopperNotes.
-    Strips markdown fences, normalises block type names, validates with Pydantic.
+    Strips markdown fences, then delegates ALL normalisation (type-name
+    mapping, table-row dict->list conversion, mindmap tree normalisation)
+    to TopperNotes.from_llm_output(), which runs it in the correct order
+    before Pydantic validation.
     """
     cleaned = raw.strip()
 
@@ -436,7 +475,7 @@ def short_notes(chunks: list[dict], topic: str = None) -> TopperNotes:
     return _parse_topper_notes(raw)
 
 
-def exam_notes(chunks: list[dict], exam,subject,chapter) -> TopperNotes:
+def exam_notes(chunks: list[dict], exam, subject, chapter) -> TopperNotes:
     """EXAM MODE (Premium) — Exam-specific Topper's Notes."""
     if not chunks:
         return TopperNotes(overview="No notes found. Please ingest a PDF first.")

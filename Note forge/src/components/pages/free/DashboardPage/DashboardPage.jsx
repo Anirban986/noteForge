@@ -40,9 +40,9 @@ export default function DashboardPage({ isPremium, onUpgrade, user }) {
     const countDocs=async ()=>{
       try{
         const res=await api.get("/api/notes/countDocs");
-        setCount(res.data.count);
+        setCount(res.data.counts);
         console.log(res.data);
-        console.log(res.data.count);
+        console.log(res.data.counts);
       }catch(err){
         console.log(err)
       }

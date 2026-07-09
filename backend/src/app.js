@@ -15,13 +15,13 @@ dotenv.config();
 const authroutes = require("./routes/user.routes");
 const notesroutes = require("./routes/notes.routes");
 const paymentRoutes = require("./routes/payment.routes");
-
+const adminRoutes = require("./routes/admin.routes");
 // ─────────────────────────────
 // Allowed Origins
 // ─────────────────────────────
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL
+ /* process.env.CLIENT_URL*/
 ].filter(Boolean);
 
 // ─────────────────────────────
@@ -71,7 +71,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authroutes);
 app.use("/api/notes", notesroutes);
 app.use("/api/payment", paymentRoutes);
-
+app.use("/api/admin", adminRoutes);
 // ─────────────────────────────
 // Export App
 // ─────────────────────────────

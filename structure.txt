@@ -1,5 +1,42 @@
 ├── ai_backend/
+│   ├── ai_notes/
+│   │   ├── api/
+│   │   │   ├── dependencies/
+│   │   │   │   └── auth.py
+│   │   │   ├── routes/
+│   │   │   │   ├── ingest.py
+│   │   │   │   ├── manage.py
+│   │   │   │   ├── notes.py
+│   │   │   │   └── query.py
+│   │   │   └── app.py
+│   │   ├── ml/
+│   │   │   ├── build_features.py
+│   │   │   └── ml_predictor.py
+│   │   ├── prompt/
+│   │   │   └── question_parser_prompt.py
+│   │   ├── services/
+│   │   │   ├── extractor.py
+│   │   │   ├── generator.py
+│   │   │   ├── ingest_service.py
+│   │   │   ├── question_parser.py
+│   │   │   ├── syllabus_parser.py
+│   │   │   └── vector_store.py
+│   │   ├── test/
+│   │   │   └── test.py
+│   │   ├── utils/
+│   │   │   ├── notes_saver.py
+│   │   │   └── pdf_loader.py
+│   │   ├── .gitattributes
+│   │   ├── .renderignore
+│   │   ├── config.py
+│   │   ├── Dockerfile
+│   │   ├── main.py
+│   │   ├── packages.txt
+│   │   ├── README.md
+│   │   └── requirements.txt
 │   ├── api/
+│   │   ├── dependencies/
+│   │   │   └── auth.py
 │   │   ├── routes/
 │   │   │   ├── ingest.py
 │   │   │   ├── manage.py
@@ -7,17 +44,23 @@
 │   │   │   └── query.py
 │   │   └── app.py
 │   ├── chroma_db/
-│   │   ├── ff994a92-5752-4145-929d-e33149a52865/
+│   │   ├── fde883f2-7d20-4fac-8e73-71a1bb244a4b/
 │   │   │   ├── data_level0.bin
 │   │   │   ├── header.bin
-│   │   │   ├── index_metadata.pickle
 │   │   │   ├── length.bin
 │   │   │   └── link_lists.bin
 │   │   └── chroma.sqlite3
+│   ├── ml/
+│   │   ├── build_features.py
+│   │   └── ml_predictor.py
+│   ├── prompt/
+│   │   └── question_parser_prompt.py
 │   ├── services/
 │   │   ├── extractor.py
 │   │   ├── generator.py
 │   │   ├── ingest_service.py
+│   │   ├── question_parser.py
+│   │   ├── syllabus_parser.py
 │   │   └── vector_store.py
 │   ├── test/
 │   │   └── test.py
@@ -27,21 +70,26 @@
 │   ├── .env
 │   ├── .renderignore
 │   ├── config.py
+│   ├── Dockerfile
 │   ├── main.py
-│   ├── requirement.txt
 │   ├── requirements.txt
-│   └── services-account.json
+│   ├── services-account.json
+│   └── structure.txt
 ├── backend/
 │   ├── src/
 │   │   ├── config/
 │   │   │   └── s3.js
 │   │   ├── controllers/
+│   │   │   ├── admin.controller.js
+│   │   │   ├── admin.syllabus.controller.js
 │   │   │   ├── notes.controllers.js
 │   │   │   ├── payment.controller.js
 │   │   │   └── user.controller.js
 │   │   ├── db/
-│   │   │   └── db.js
+│   │   │   ├── db.js
+│   │   │   └── pg.js
 │   │   ├── middleware/
+│   │   │   ├── admin.upload.middleware.js
 │   │   │   ├── notes.middleware.js
 │   │   │   ├── premium.middleware.js
 │   │   │   └── user.middleware.js
@@ -51,33 +99,51 @@
 │   │   │   ├── payments.model.js
 │   │   │   └── user.model.js
 │   │   ├── repositories/
+│   │   │   ├── admin.repository.js
 │   │   │   ├── metadata.repository.js
 │   │   │   ├── notes.repository.js
 │   │   │   ├── payment.repository.js
+│   │   │   ├── syllabus.repository.js
 │   │   │   └── user.repository.js
 │   │   ├── routes/
+│   │   │   ├── admin.routes.js
+│   │   │   ├── admin.syllabus.routes.js
 │   │   │   ├── notes.routes.js
 │   │   │   ├── payment.routes.js
 │   │   │   └── user.routes.js
 │   │   ├── services/
+│   │   │   ├── admin.service.js
+│   │   │   ├── admin.syllabus.service.js
+│   │   │   ├── ai.service.js
 │   │   │   ├── notes.services.js
 │   │   │   ├── payment.service.js
 │   │   │   ├── storage.services.js
 │   │   │   └── user.services.js
+│   │   ├── sql/
+│   │   │   └── questionSchema.sql
+│   │   ├── test/
 │   │   ├── utils/
 │   │   │   ├── mailer.js
 │   │   │   └── otp.js
 │   │   └── app.js
 │   ├── uploads/
-│   │   
+│   │   ├── 69a865a5a30dc146142bbc29/
+│   │   │  
+│   │   ├── 69a86ca2bcc61a0a4871e757/
 │   ├── .env
 │   ├── package.json
-│   └── server.js
+│   ├── server.js
+│   └── testconnection.js
 ├── Note forge/
 │   ├── public/
 │   ├── src/
 │   │   ├── assets/
 │   │   ├── components/
+│   │   │   ├── charts/
+│   │   │   │   ├── Chapterstatspanel.css
+│   │   │   │   ├── Chapterstatspanel.jsx
+│   │   │   │   ├── Weighatagesparksline.jsx
+│   │   │   │   └── Weightagesparksline.css
 │   │   │   ├── layout/
 │   │   │   │   ├── AuthModal/
 │   │   │   │   │   ├── AuthModal.css
@@ -125,6 +191,9 @@
 │   │   │   │       │   │   ├── AdminDashboard.css
 │   │   │   │       │   │   ├── AdminDashboard.jsx
 │   │   │   │       │   │   └── AdminRoute.jsx
+│   │   │   │       │   ├── AdminCharts/
+│   │   │   │       │   │   ├── AdminCharts.css
+│   │   │   │       │   │   └── AdminCharts.jsx
 │   │   │   │       │   ├── AdminSidebar/
 │   │   │   │       │   │   ├── AdminSidebar.css
 │   │   │   │       │   │   └── AdminSidebar.jsx
