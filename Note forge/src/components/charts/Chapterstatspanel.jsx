@@ -33,7 +33,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import "./ChapterStatsPanel.css";
+import "./Chapterstatspanel.css";
 
 // ── Chart.js CDN loader (called once) ─────────────────
 let _cjsReady = false;
