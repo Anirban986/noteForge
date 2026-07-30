@@ -21,8 +21,8 @@ export const EXAM_DATA = {
   // Source: Official GATE 2026 syllabus, IIT Guwahati (CS)
   // Sections match the official section numbering.
 
-  "GATE CS 2026": {
-    label:       "GATE CS 2026",
+  "GATE 2027": {
+    label:       "GATE 2027",
     description: "Graduate Aptitude Test in Engineering — Computer Science and IT",
     totalMarks:  100,   // 65 questions: 1-mark + 2-mark sections + GA
     subjects: {

@@ -81,7 +81,7 @@ function ExamSidebar({ page, setPage }) {
 
       <div className="exam-sidebar__coverage">
         <div className="exam-sidebar__coverage-box">
-          <div className="exam-sidebar__coverage-title">GATE 2026</div>
+          <div className="exam-sidebar__coverage-title">GATE 2027</div>
           <ProgressBar value={64} height={5} />
           <div className="exam-sidebar__coverage-sub">64% syllabus covered</div>
         </div>

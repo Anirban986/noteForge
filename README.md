@@ -33,6 +33,24 @@
 
 ---
 
+## 📸 Screenshots
+
+### Exam dashboard
+![Exam dashboard](./Note%20forge/src/assets/Noteforge_exam_dashboard.png)
+### Exam notes upload
+![Exam notes upload](./Note%20forge/src/assets/Noteforge_exam_upload.png)
+### Exam notes 
+![Exam notes](./Note%20forge/src/assets/noteforge_ml.png)
+### Admin dashboard
+![Admin dashboard](./Note%20forge/src/assets/Noteforge_admin_dashboard.png)
+### Dashboard normal mode
+![Dashboard normal mode](./Note%20forge/src/assets/Noteforge_normal_mode_dashboard.png)
+### Notes upload normal mode
+![Notes upload normal mode](./Note%20forge/src/assets/Noteforge_normal_upload.png)
+### Notes view normal mode
+![Notes view normal mode](./Note%20forge/src/assets/Noteforge_view_notes.png)
+
+
 ## ✨ Key Features
 
 | Feature | Description |

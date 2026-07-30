@@ -18,3 +18,5 @@ services-account.json
 venv/
 env/
 .venv/
+
+requirements-full.txt

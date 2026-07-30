@@ -25,57 +25,84 @@ export default function MissingTopics() {
 
   return (
     <div className="missing fade-up">
+      {/* Under development banner */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: "rgba(245,159,0,0.14)",
+          border: "1px solid rgba(245,159,0,0.45)",
+          borderRadius: 10,
+          padding: "14px 18px",
+          marginBottom: 20,
+        }}
+      >
+        <span style={{ fontSize: 22 }}>🚧</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: "#e8590c" }}>
+            This page is under development
+          </div>
+          <div style={{ fontSize: 13, color: "#8a6d3b" }}>
+            Data shown below is a preview and not yet functional.
+          </div>
+        </div>
+        <Badge color="orange">Under Development</Badge>
+      </div>
+
       <div className="missing__header">
         <h1 className="missing__title">Missing Topics</h1>
         <p className="missing__subtitle">Topics from GATE syllabus not yet covered by your uploaded notes.</p>
       </div>
 
-      {/* Stats */}
-      <div className="missing__stats">
-        {[
-          { label:"Syllabus Covered", val:"64%", sub:"64 of 100 units" },
-          { label:"Missing Topics",   val:"14",  sub:"Need attention"  },
-          { label:"Est. Study Time",  val:"38h", sub:"To full coverage"},
-        ].map((s, i) => (
-          <Card key={s.label} hover>
-            <div className="missing__stat-label">{s.label}</div>
-            <div className="missing__stat-val" style={{ color: STAT_COLORS[i] }}>{s.val}</div>
-            <div className="missing__stat-sub">{s.sub}</div>
+      <div style={{ filter: "blur(1.5px)", pointerEvents: "none" }}>
+        {/* Stats */}
+        <div className="missing__stats">
+          {[
+            { label:"Syllabus Covered", val:"64%", sub:"64 of 100 units" },
+            { label:"Missing Topics",   val:"14",  sub:"Need attention"  },
+            { label:"Est. Study Time",  val:"38h", sub:"To full coverage"},
+          ].map((s, i) => (
+            <Card key={s.label} hover>
+              <div className="missing__stat-label">{s.label}</div>
+              <div className="missing__stat-val" style={{ color: STAT_COLORS[i] }}>{s.val}</div>
+              <div className="missing__stat-sub">{s.sub}</div>
+            </Card>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <ProgressBar value={64} height={10} label="Overall Syllabus Coverage" />
+        </div>
+
+        {SECTIONS.map(sec => (
+          <Card key={sec.key} className="missing__section">
+            <div className="missing__section-header">
+              <span>{sec.icon}</span>
+              <span className="missing__section-title">{sec.label}</span>
+              <Badge color={sec.color} size="xs">{MISSING_TOPICS[sec.key].length} topics</Badge>
+            </div>
+
+            {MISSING_TOPICS[sec.key].map(topic => (
+              <div key={topic} className="missing__topic-row">
+                <div style={{ flex: 1 }}>
+                  <div className="missing__topic-name">{topic}</div>
+                  <div className="missing__topic-meta">Not in any uploaded note · GATE weightage: high</div>
+                </div>
+
+                {generating === topic ? (
+                  <div className="missing__generating">
+                    <div className="missing__spin spin" />
+                    Generating…
+                  </div>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => generate(topic)}>✨ Quick Notes</Button>
+                )}
+              </div>
+            ))}
           </Card>
         ))}
       </div>
-
-      <div style={{ marginBottom: 20 }}>
-        <ProgressBar value={64} height={10} label="Overall Syllabus Coverage" />
-      </div>
-
-      {SECTIONS.map(sec => (
-        <Card key={sec.key} className="missing__section">
-          <div className="missing__section-header">
-            <span>{sec.icon}</span>
-            <span className="missing__section-title">{sec.label}</span>
-            <Badge color={sec.color} size="xs">{MISSING_TOPICS[sec.key].length} topics</Badge>
-          </div>
-
-          {MISSING_TOPICS[sec.key].map(topic => (
-            <div key={topic} className="missing__topic-row">
-              <div style={{ flex: 1 }}>
-                <div className="missing__topic-name">{topic}</div>
-                <div className="missing__topic-meta">Not in any uploaded note · GATE weightage: high</div>
-              </div>
-
-              {generating === topic ? (
-                <div className="missing__generating">
-                  <div className="missing__spin spin" />
-                  Generating…
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={() => generate(topic)}>✨ Quick Notes</Button>
-              )}
-            </div>
-          ))}
-        </Card>
-      ))}
     </div>
   );
 }

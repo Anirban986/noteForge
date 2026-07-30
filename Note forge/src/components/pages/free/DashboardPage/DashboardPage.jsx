@@ -3,18 +3,14 @@ import Card from "../../../ui/Card/Card";
 import Badge from "../../../ui/Badge/Badge";
 import Button from "../../../ui/Button/Button";
 import SectionTitle from "../../../ui/SectionTitle/SectionTitle";
-import { NOTES_DATA } from "../../../../data/mockData";
 import { useEffect, useState } from "react";
 import api from "../../../layout/api";
 
 
-export default function DashboardPage({ isPremium, onUpgrade, user }) {
-  const recentNotes = [...NOTES_DATA]
-    .sort((a, b) => b.addedTs - a.addedTs)
-    .slice(0, 4);
+export default function DashboardPage({ isPremium, onUpgrade, user, setPage }) {
 
-  
-  
+  const [recentNotes, setRecentNotes] = useState([]);
+
   const [details,setDetails]=useState([]);
   const [count,setCount]=useState(null);
 
@@ -50,6 +46,22 @@ export default function DashboardPage({ isPremium, onUpgrade, user }) {
     countDocs();
   },[])
 
+  useEffect(()=>{
+    const fetchRecentNotes=async ()=>{
+      try{
+        const res=await api.get("/api/notes/premium/myNotes?mode=Normal");
+        const list = Array.isArray(res.data) ? res.data : res.data.notes || [];
+        const sorted = [...list]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 4);
+        setRecentNotes(sorted);
+      }catch(err){
+        console.log(err);
+      }
+    }
+    fetchRecentNotes();
+  },[])
+
 
   const stats = [
     { icon: "📄", label: "Notes Uploaded",  value: isPremium ? (count?count.normal:0) : "5",  sub: isPremium ? "Unlimited plan" : "5 / 5 free limit",  bg: "#eef2ff" },
@@ -81,23 +93,39 @@ export default function DashboardPage({ isPremium, onUpgrade, user }) {
       <div className="two-col">
         {/* Recent Notes */}
         <Card className="fade-up-2">
-          <SectionTitle action={<Button variant="ghost" size="sm">View All →</Button>}>
+          <SectionTitle action={
+            <Button variant="ghost" size="sm" onClick={() => setPage("my-notes")}>
+              View All →
+            </Button>
+          }>
             Recent Notes
           </SectionTitle>
           {recentNotes.map((n) => (
-            <div key={n.id} className="recent-note">
-              <div className="recent-note__icon" style={{ background: n.iconBg }}>
-                {n.icon}
+            <div
+              key={n._id || n.fileUrl}
+              className="recent-note"
+              onClick={() => setPage("note-viewer", n._id || n.fileUrl)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="recent-note__icon" style={{ background: "#eef2ff" }}>
+                📄
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="recent-note__title">{n.chapter}</div>
+                <div style={{ fontSize: 12, color: "#9399a6", marginTop: 1 }}>{n.title}</div>
                 <div className="recent-note__meta">
-                  {n.subject} · {n.pages}p · {n.dateLabel}
+                  {n.subject} · {n.blockSummary?.totalBlocks ?? 0} blocks · {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </div>
               </div>
               <Badge color="accent" size="xs">AI</Badge>
             </div>
           ))}
+
+          <div style={{ padding: "10px 0", textAlign: "center" }}>
+            <Button variant="ghost" size="sm" onClick={() => setPage("upload-notes")}>
+              + Upload New Notes
+            </Button>
+          </div>
         </Card>
 
         {/* Exam Mode card */}
