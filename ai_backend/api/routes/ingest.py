@@ -71,6 +71,7 @@ async def ingest(
             "pages":   result["pages"],
             "chunks":  result["chunks"],
             "failed":  result["failed"],
+            "timings": result["timings"],
         }
     except ValueError as e:
         logger.exception("Validation error during note ingestion")

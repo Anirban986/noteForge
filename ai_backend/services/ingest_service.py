@@ -14,17 +14,29 @@ Everything else (download, pdf→images, OCR, cleanup) is completely unchanged.
 from pathlib import Path
 
 import tempfile
+import time
 import requests
-import logging
 import os
 import gc
 
 from utils    import pdf_loader
 from services import extractor, vector_store
 
-logger = logging.getLogger(__name__)
-
 MAX_FILE_SIZE = 50 * 1024 * 1024
+
+#─────────────────────────────────────────────────────────
+#  Measure execution time
+#─────────────────────────────────────────────────────────
+def measure(fn, *args, **kwargs):
+    """
+    Executes a function and returns:
+        result, elapsed_time_seconds
+    """
+    start = time.perf_counter()
+    result = fn(*args, **kwargs)
+    elapsed = round(time.perf_counter() - start, 3)
+    return result, elapsed
+
 
 
 # ─────────────────────────────────────────────────────────
@@ -32,18 +44,18 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 # ─────────────────────────────────────────────────────────
 
 def download_pdf(pdf_url: str) -> str:
-    logger.info(f"Downloading PDF from: {pdf_url[:80]}...")
+    print(f"Downloading PDF from: {pdf_url[:80]}...")
     
     response = requests.get(pdf_url, stream=True, timeout=120)
     response.raise_for_status()
     
     content_length = response.headers.get("Content-Length", "unknown")
     content_type   = response.headers.get("Content-Type", "unknown")
-    logger.info(f"Content-Length: {content_length}, Content-Type: {content_type}")
+    print(f"Content-Length: {content_length}, Content-Type: {content_type}")
     
     # Check content type
     if "pdf" not in content_type.lower() and content_length != "unknown":
-        logger.warning(f"Unexpected content type: {content_type}")
+        print(f"WARNING: Unexpected content type: {content_type}")
     
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
         total_bytes = 0
@@ -52,7 +64,7 @@ def download_pdf(pdf_url: str) -> str:
                 temp_file.write(chunk)
                 total_bytes += len(chunk)
         
-        logger.info(f"Downloaded {total_bytes} bytes to {temp_file.name}")
+        print(f"Downloaded {total_bytes} bytes to {temp_file.name}")
         
         # Fail fast if empty
         if total_bytes == 0:
@@ -66,9 +78,9 @@ def download_pdf(pdf_url: str) -> str:
 # ─────────────────────────────────────────────────────────
 
 def load_pdf_images(local_pdf_path: str):
-    logger.info("Converting PDF to images")
+    print("Converting PDF to images")
     images = pdf_loader.load(local_pdf_path)
-    logger.info(f"Loaded {len(images)} page(s)")
+    print(f"Loaded {len(images)} page(s)")
     return images
 
 
@@ -77,11 +89,11 @@ def load_pdf_images(local_pdf_path: str):
 # ─────────────────────────────────────────────────────────
 
 def extract_pages(images):
-    logger.info("Starting OCR extraction")
+    print("Starting OCR extraction")
     pages = extractor.extract_all(images)
     if not pages:
         raise ValueError("No text extracted from PDF")
-    logger.info(f"Successfully extracted {len(pages)} page(s)")
+    print(f"Successfully extracted {len(pages)} page(s)")
     return pages
 
 
@@ -95,14 +107,14 @@ def store_embeddings(
     source_type:   str  = "notes",
     extra_metadata: dict = None,
 ):
-    logger.info(f"Creating embeddings (source_type={source_type})")
+    print(f"Creating embeddings (source_type={source_type})")
     num_chunks = vector_store.store_embeddings(
         pages=pages,
         source=source,
         source_type=source_type,
         extra_metadata=extra_metadata or {},
     )
-    logger.info(f"{num_chunks} chunks indexed")
+    print(f"{num_chunks} chunks indexed")
     return num_chunks
 
 
@@ -114,9 +126,9 @@ def cleanup_temp_file(local_pdf_path: str | None):
     if local_pdf_path and os.path.exists(local_pdf_path):
         try:
             os.remove(local_pdf_path)
-            logger.info("Temporary PDF deleted")
-        except Exception:
-            logger.exception("Failed to cleanup temp PDF")
+            print("Temporary PDF deleted")
+        except Exception as e:
+            print(f"ERROR: Failed to cleanup temp PDF: {e}")
 
 
 # ─────────────────────────────────────────────────────────
@@ -128,10 +140,10 @@ def cleanup_temp_file(local_pdf_path: str | None):
 # ─────────────────────────────────────────────────────────
 
 def run(
-    pdf_url:        str,
-    source:         str  | None = None,
-    source_type:    str          = "notes",
-    extra_metadata: dict | None  = None,
+    pdf_url: str,
+    source: str | None = None,
+    source_type: str = "notes",
+    extra_metadata: dict | None = None,
 ) -> dict:
     """
     Run ingestion pipeline.
@@ -143,52 +155,93 @@ def run(
             ↓
         OCR
             ↓
-        embeddings (tagged with source_type + extra_metadata)
+        embeddings
             ↓
         vector storage
             ↓
         cleanup
     """
+
     local_pdf_path = None
+    timings = {}
+
+    overall_start = time.perf_counter()
 
     try:
-        logger.info("=" * 50)
-        logger.info(f"INGESTION STARTED  source_type={source_type}")
-        logger.info("=" * 50)
+        print("=" * 60)
+        print(f"INGESTION STARTED | source_type={source_type}")
+        print("=" * 60)
 
-        local_pdf_path = download_pdf(pdf_url)
+        # ---------------------------------------------------
+        # Download
+        # ---------------------------------------------------
+        local_pdf_path, timings["download"] = measure(
+            download_pdf,
+            pdf_url,
+        )
 
         if not source:
             source = Path(local_pdf_path).stem
 
-        images      = load_pdf_images(local_pdf_path)
+        # ---------------------------------------------------
+        # PDF -> Images
+        # ---------------------------------------------------
+        images, timings["pdf_to_images"] = measure(
+            load_pdf_images,
+            local_pdf_path,
+        )
+
         total_pages = len(images)
-        pages       = extract_pages(images)
+
+        # ---------------------------------------------------
+        # OCR
+        # ---------------------------------------------------
+        pages, timings["ocr"] = measure(
+            extract_pages,
+            images,
+        )
+
         failed_pages = total_pages - len(pages)
 
         del images
         gc.collect()
 
-        num_chunks = store_embeddings(
+        # ---------------------------------------------------
+        # Embedding + Vector Storage
+        # ---------------------------------------------------
+        num_chunks, timings["embedding_and_storage"] = measure(
+            store_embeddings,
             pages=pages,
             source=source,
             source_type=source_type,
             extra_metadata=extra_metadata or {},
         )
 
-        logger.info("=" * 50)
-        logger.info("INGESTION COMPLETE")
-        logger.info("=" * 50)
+        timings["total"] = round(
+            time.perf_counter() - overall_start,
+            3,
+        )
+
+        print("=" * 60)
+        print("INGESTION COMPLETE")
+        print("=" * 60)
+
+        print("Pipeline Timings")
+        print("-------------------------------")
+        for stage, t in timings.items():
+            print(f"{stage:<25}: {t:.3f} sec")
+        print("-------------------------------")
 
         return {
             "source": source,
-            "pages":  len(pages),
+            "pages": len(pages),
             "chunks": num_chunks,
             "failed": failed_pages,
+            "timings": timings,
         }
 
-    except Exception:
-        logger.exception("Ingestion pipeline failed")
+    except Exception as e:
+        print(f"ERROR: Ingestion pipeline failed: {e}")
         raise
 
     finally:
