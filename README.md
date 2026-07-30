@@ -60,7 +60,7 @@
 | 🧠 **RAG Pipeline** | Chunks, embeds, and retrieves the most relevant content |
 | 📝 **Smart Short Notes** | LLM-generated concise notes tailored to the content |
 | 🎯 **Exam Mode** | Exam-specific notes, ML insights, chapter weightage, trends |
-| 📊 **Mock Tests** | Auto-generated MCQs and subjective questions from your notes |
+| 📊 **Mock Tests** | Auto-generated MCQs and subjective questions from your notes(under development) |
 | ☁️ **Cloud Storage** | All files securely stored on AWS S3 |
 | ⚡ **Scalable Backend** | Chunking + vector storage for fast, context-aware retrieval |
 
@@ -82,7 +82,7 @@ Upload your PDF and optionally specify an exam (e.g., JEE, UPSC, GATE, NEET, etc
 - **Chapter Weightage** — Which chapters/topics carry the most marks
 - **Exam Trends** — Historically frequently asked topics (via ML analysis)
 - **ML Insights** — Pattern recognition across past exam data
-- **Mock Tests** — Auto-generated questions with difficulty calibration
+- **Mock Tests** — Auto-generated questions with difficulty calibration(underdevelopment)
 
 ---
 
